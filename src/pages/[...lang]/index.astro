@@ -17,7 +17,7 @@ const L = {
   id: {
     heroLines: ['Solusi Total Untuk', 'Energi dan Infrastruktur'],
     heroText: 'PT PGAS Solution adalah anak perusahaan dari PT Perusahaan Gas Negara Tbk. yang menyediakan berbagai layanan di bidang Energi dan Infrastruktur',
-    heroAlt: 'Fasilitas pengolahan gas dengan pipa kuning di kaki perbukitan hijau saat pagi',
+    heroAlt: 'Anjungan lepas pantai berwarna kuning di tengah laut dengan kapal pendukung di kejauhan',
     latest: 'Artikel terbaru', seeAll: 'Lihat semua', more: 'Selengkapnya', about: 'tentang', aboutEyebrow: 'Tentang Kami', aboutCta: 'Kenali Kami Lebih Jauh',
     clients: 'Klien kami', info: 'Informasi', feedTitle: 'Press Release & Berita', prev: 'Artikel sebelumnya', next: 'Artikel berikutnya', read: 'Baca', since: 'sejak',
     alts: { epc: 'Kapal crane memasang modul anjungan lepas pantai dengan pipa kuning di latar depan', om: 'Fasilitas pipa gas kuning dan tangki berlogo PGN Solution', 'supply-chain': 'Pipa baja diangkut forklift dan crane di pelabuhan', tuk: 'Peralatan pelatihan katup dan alat ukur tekanan di ruang praktik' } as Record<string, string>,
@@ -25,7 +25,7 @@ const L = {
   en: {
     heroLines: ['Total Solution for', 'Energy and Infrastructure'],
     heroText: 'PT PGAS Solution is a leading government-owned enterprise that provides a full range of services in Energy and Infrastructure',
-    heroAlt: 'Gas processing facility with yellow pipelines at the foot of green hills in the morning',
+    heroAlt: 'Yellow offshore platform at sea with a support vessel in the distance',
     latest: 'Latest article', seeAll: 'See all', more: 'Learn more', about: 'about', aboutEyebrow: 'About Us', aboutCta: 'Get to Know Us',
     clients: 'Our clients', info: 'Information', feedTitle: 'Press Release & News', prev: 'Previous article', next: 'Next article', read: 'Read', since: 'since',
     alts: { epc: 'Crane vessel installing an offshore platform module with yellow pipes in the foreground', om: 'Yellow gas pipeline facility and a tank with the PGN Solution logo', 'supply-chain': 'Steel pipes moved by forklift and crane at a port', tuk: 'Valve training equipment and pressure gauges in a practice room' } as Record<string, string>,
@@ -56,8 +56,8 @@ export const getStaticPaths = langPaths;
   <section class="hero theme-dark" style="background:#050607" aria-labelledby="hero-title" data-sheet-under>
     <div class="hero__bg">
     <div class="hero__media">
-      <!-- static photo (supplied as public/media/hero/new-homepage.png; was a YouTube background video) -->
-      <img class="hero-settle" src="/media/hero/home.webp" srcset="/media/hero/home.webp 1673w, /media/hero/home@2x.webp 3346w" sizes="100vw" alt={L.heroAlt} fetchpriority="high" decoding="async" />
+      <!-- static photo (supplied as public/media/hero/image 12.png; was a YouTube background video) -->
+      <img class="hero-settle" src="/media/hero/home.webp" srcset="/media/hero/home.webp 1510w, /media/hero/home@2x.webp 3020w" sizes="100vw" alt={L.heroAlt} fetchpriority="high" decoding="async" />
     </div>
     </div>
     <div class="hero__content">
@@ -387,6 +387,12 @@ export const getStaticPaths = langPaths;
     .steps__item { min-height: 0; padding-block: 32px; opacity: 1; border-bottom: 1px solid var(--line); }
     .steps__idx { position: static; }
     .steps__list { padding-left: 0; }
+    /* one photo here (the first): the steps sit below the image, so swapping it would happen out of view */
+    .steps__img, .steps__img.is-active { opacity: 0; transform: none; }
+    .steps__img:first-child { opacity: 1; }
+    /* a smaller notch, centred on the left edge (the script's travelling `top` is overridden) */
+    .steps__sticky :global(.steps__notch) { top: calc(50% - 56px) !important; height: 112px !important; width: 20px; }
+    .steps__sticky :global(.steps__notch svg) { height: 34px; }
   }
 
 

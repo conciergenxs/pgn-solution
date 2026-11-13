@@ -211,7 +211,8 @@ const pfScroll = l.portfolio.length > 3;
   .svc-media__btn img { position: absolute; inset: -6% 0; width: 100%; height: 112%; object-fit: cover; transition: transform 1.2s var(--ease), filter 0.6s; }
   .svc-media__btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 34, 51, 0) 45%, rgba(3, 34, 51, 0.55) 100%); pointer-events: none; }
   .svc-media__btn:hover img { filter: brightness(0.92); }
-  .svc-media__frame :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  /* the video fills the frame like its cover photo (cropped to the frame, no black bars) */
+  .svc-media__frame :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--ink); }
   /* notch cut into the middle of the frame's left edge */
   /* whole-pixel height and offset (no translate) so the notch halves meet without a hairline seam */
   .svc-media :global(.svc-media__notch) { left: 0; top: calc(50% - 110px); height: 220px; z-index: 2; }
