@@ -1,0 +1,53 @@
+---
+// Content manager for the Artikel page (press releases, news, gallery). Front end only: it starts from
+// /cms/seed.json and keeps changes in this browser (localStorage). Not linked from the public site.
+import '@fontsource-variable/geist';
+import '@fontsource-variable/inter-tight';
+import '../../cms/cms.css';
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>CMS | PGN Solution</title>
+    <link rel="icon" type="image/png" href="/media/brand/favicon-new.png" />
+  </head>
+  <body>
+    <div class="app" data-app>
+      <aside class="side" data-side>
+        <div class="side__brand">
+          <img src="/media/brand/home-logo-light.png" alt="PGN Solution" width="132" height="26" />
+          <span class="side__product">CMS</span>
+        </div>
+        <nav class="side__nav" aria-label="Menu CMS" data-nav></nav>
+        <div class="side__foot">
+          <a class="side__site" href="/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" /></svg>Lihat situs
+          </a>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="top">
+          <button class="top__menu" type="button" aria-label="Buka menu" data-side-toggle><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+          <nav class="crumbs" aria-label="Lokasi" data-crumbs></nav>
+          <div class="top__right">
+            <div class="user">
+              <span class="user__avatar" aria-hidden="true">AK</span>
+              <span class="user__meta"><span class="user__name">Admin Komunikasi</span><span class="user__role">Editor</span></span>
+            </div>
+          </div>
+        </header>
+        <main class="view" id="view" tabindex="-1" data-view>
+          <div class="loading"><span class="spinner"></span>Memuat konten…</div>
+        </main>
+      </div>
+    </div>
+    <div class="toasts" aria-live="polite" data-toasts></div>
+    <div class="modal-root" data-modal-root></div>
+    <script>
+      import '../../cms/app';
+    </script>
+  </body>
+</html>

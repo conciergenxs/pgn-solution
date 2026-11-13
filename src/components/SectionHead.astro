@@ -1,0 +1,16 @@
+---
+interface Props { eyebrow?: string; title: string; text?: string; id?: string; level?: 'h2' | 'h3'; size?: 'xl' | 'lg' | 'md'; align?: 'center' | 'left'; maxw?: string }
+const { eyebrow, title, text, id, level = 'h2', size = 'xl', align = 'center', maxw = '18ch' } = Astro.props;
+const Tag = level;
+// Section headlines read best on two lines: never let a narrow maxw force three or four.
+// Very long titles (60+ characters) step down one size and get more room, so they still land on ~2 lines.
+const long = size === 'xl' && title.length > 60;
+const cls = long ? 't-lg' : `t-${size}`;
+const mw = long ? '40ch' : /^\d+(\.\d+)?ch$/.test(maxw) ? `${Math.max(parseFloat(maxw), 22)}ch` : maxw;
+---
+<div class:list={['sec-head', align === 'left' && 'sec-head--left']} data-reveal="fade">
+  {eyebrow && <p class="t-eyebrow">{eyebrow}</p>}
+  <Tag id={id} class={cls} style={`max-width:${mw};text-wrap:balance`}>{title}</Tag>
+  {text && <p class="t-body">{text}</p>}
+  <slot />
+</div>

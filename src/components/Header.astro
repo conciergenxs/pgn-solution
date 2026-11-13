@@ -1,0 +1,108 @@
+---
+import Icon from './Icon.astro';
+import { locales } from '../data/site';
+import { basePath, langOf, pathIn } from '../i18n';
+import { content } from '../i18n/content';
+import { ui } from '../i18n/ui';
+
+const lang = langOf(Astro.params);
+const t = ui[lang];
+const { nav, company } = content(lang);
+// current page without its locale prefix, so the nav (plain hrefs) can match it
+const path = basePath(Astro.url.pathname.replace(/\/$/, '') || '/');
+// the same page in each locale. These links are written final: the middleware leaves hreflang="id" links alone
+// the 404 page exists once (no English twin), so its switcher goes to each home page
+const here = /^\/404(\.html|\/)?$/.test(Astro.url.pathname) ? '/' : Astro.url.pathname.replace(/(.)\/$/, '$1');
+const switchTo = (code: 'id' | 'en') => pathIn(code, here);
+const isCurrent = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
+// Kontak is the header CTA; every other section, Karir included, is a text link in the pill.
+const pillNav = nav.filter((n) => n.href !== '/contact');
+---
+<a class="skip-link" href="#main">{t.skip}</a>
+<div class="load-bar" aria-hidden="true"></div>
+<header class="site-header" data-header>
+  <div class="pill" data-pill>
+    <span class="pill__bg" data-pill-bg aria-hidden="true"></span>
+    <svg class="pill__line" aria-hidden="true" focusable="false"><path data-pill-line /></svg>
+    <a class="brand" href="/" aria-label={`${company.brand} — ${t.home}`}>
+      <img src="/media/brand/home-logo-light.png" alt={company.brand} width="166" height="33" />
+    </a>
+    <div class="pill__mid" data-pill-mid>
+    <nav class="nav" aria-label={t.mainNav}>
+      <ul class="nav__list">
+        {pillNav.map((item) => (
+          <li class="nav__item">
+            <a class="nav__link" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+              {item.children && <Icon name="chev" />}
+            </a>
+            {item.children && (
+              <div class="nav__panel">
+                <ul>{item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <div class="lang nav__item">
+      <button class="nav__link lang__trigger" type="button" aria-haspopup="true" aria-label={t.langPick}>
+        <Icon name="globe" class="lang__globe" />{lang.toUpperCase()}<Icon name="chev" />
+      </button>
+      <div class="nav__panel lang__panel">
+        <ul>
+          {locales.map((l) => (
+            <li><a class="lang__item" href={switchTo(l.code)} hreflang={l.code} lang={l.code} aria-current={l.code === lang ? 'true' : undefined} data-astro-reload>{l.name}<span class="lang__code">{l.label}</span></a></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    </div>
+    <div class="header-cta">
+      <a class="btn btn--primary" href="/contact">{t.contactUs}</a>
+    </div>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu" aria-label={t.openMenu} data-menu-toggle>
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="menu" id="site-menu" data-menu aria-hidden="true">
+  <!-- a glass card under the header, as wide as it (same material as the pill) -->
+  <div class="menu__panel" data-menu-panel>
+    <nav aria-label={t.mobileNav}>
+      <ul class="menu__list">
+        <li><div class="menu__row"><a class="menu__link" href="/" aria-current={path === '/' ? 'page' : undefined}>{t.homeLabel}</a></div></li>
+        {nav.map((item, i) => (
+          <li>
+            <div class="menu__row">
+              <a class="menu__link" href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
+              {item.children && (
+                <button class="menu__expand" type="button" aria-expanded="false" aria-controls={`menu-sub-${i}`} aria-label={`${t.showSub} ${item.label}`}>
+                  <Icon name="plus" />
+                </button>
+              )}
+            </div>
+            {item.children && (
+              <ul class="menu__sub" id={`menu-sub-${i}`}>
+                {item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <div class="menu__lang" role="group" aria-label={t.langPick}>
+      <span class="menu__lang-label">{t.language}</span>
+      <span class="seg">
+        {locales.map((l) => (
+          <a class="seg__opt" href={switchTo(l.code)} hreflang={l.code} lang={l.code} aria-current={l.code === lang ? 'true' : undefined} title={l.name} data-astro-reload>{l.label}</a>
+        ))}
+      </span>
+    </div>
+    <div class="menu__foot">
+      <a class="btn btn--primary" href="/contact">{t.contactUs}</a>
+      <a class="btn btn--dark" href={`mailto:${company.email}`}>{company.email}</a>
+    </div>
+  </div>
+</div>

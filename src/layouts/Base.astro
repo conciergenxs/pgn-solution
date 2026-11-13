@@ -1,0 +1,95 @@
+---
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
+import '@fontsource-variable/inter-tight';
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import { company } from '../data/site';
+import { basePath, langOf, pathIn } from '../i18n';
+import { ui } from '../i18n/ui';
+
+const lang = langOf(Astro.params);
+const t = ui[lang];
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  hideCta?: boolean;
+  type?: 'website' | 'article';
+}
+const { title, description = t.defaultDesc, image = '/media/header/home-web-nov21.jpg', hideCta = false, type = 'website' } = Astro.props;
+const fullTitle = title ? `${title} | PGN Solution` : 'PGN Solution Action for excellence';
+const site = Astro.site ?? new URL('https://www.pgn-solution.co.id');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = new URL(image, site).href;
+// the same page in each locale, for search engines
+const alt = (l: 'id' | 'en') => new URL(pathIn(l, Astro.url.pathname), site).href;
+const isPage = !/^\/404(\.html|\/)?$/.test(Astro.url.pathname);
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {isPage && <link rel="alternate" hreflang="id" href={alt('id')} />}
+    {isPage && <link rel="alternate" hreflang="en" href={alt('en')} />}
+    {isPage && <link rel="alternate" hreflang="x-default" href={alt('id')} />}
+    <link rel="icon" type="image/png" href="/media/brand/favicon-new.png" />
+    <meta name="theme-color" content="#032233" />
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={company.brand} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'id_ID'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@pgn_solution" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <ClientRouter fallback="swap" />
+    <slot name="head" />
+  </head>
+  <body>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer hideCta={hideCta} />
+
+    <dialog class="lightbox" data-lightbox-dialog data-lenis-prevent aria-label={t.gallery}>
+      <div class="lightbox__inner">
+        <div class="lightbox__bar">
+          <div class="lightbox__meta">
+            <p class="lightbox__title" data-lb-title></p>
+            <p class="lightbox__caption" data-lb-caption></p>
+          </div>
+          <div class="lightbox__tools">
+            <div class="lightbox__zoom" role="group" aria-label={t.zoom}>
+              <button class="lightbox__zbtn" type="button" data-lb-zoom-out aria-label={t.zoomOut}><Icon name="minus" /></button>
+              <button class="lightbox__pct" type="button" data-lb-zoom-reset aria-label={t.zoomReset}>100%</button>
+              <button class="lightbox__zbtn" type="button" data-lb-zoom-in aria-label={t.zoomIn}><Icon name="plus" /></button>
+            </div>
+            <span class="lightbox__count" data-lb-count></span>
+            <button class="icon-btn icon-btn--dark lightbox__close" type="button" data-lb-close aria-label={t.close}><Icon name="close" /></button>
+          </div>
+        </div>
+        <div class="lightbox__stage">
+          <div class="lightbox__view" data-lb-view><img data-lb-img alt="" draggable="false" /></div>
+          <button class="icon-btn icon-btn--dark lightbox__nav lightbox__nav--prev" type="button" data-lb-prev aria-label={t.prevImage}><Icon name="arrow-left" /></button>
+          <button class="icon-btn icon-btn--dark lightbox__nav lightbox__nav--next" type="button" data-lb-next aria-label={t.nextImage}><Icon name="arrow" /></button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      import '../scripts/app';
+    </script>
+  </body>
+</html>

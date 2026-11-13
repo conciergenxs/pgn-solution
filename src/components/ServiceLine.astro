@@ -1,0 +1,306 @@
+---
+/**
+ * One business line on /business, laid out to explain itself (EPC first, then O&M, Supply Chain, TUK):
+ *  1. head: index + tag, title left, lead right (+ the line's link, if any)
+ *  2. feature: a blue gradient panel beside the photo/video. The panel carries the line's stats
+ *     (count-up) or, when it has none, its focus areas (title + text). The dividers between rows are
+ *     lines that bend away into the empty right side, each with a travelling light. The frame has a
+ *     notch cut into the middle of its left edge; "Putar video" plays the video in place
+ *  3. Produk & Jasa: a centred head over a centred block of icon chips (rise in as a wave; the
+ *     hovered one fills blue while the rest step back). Icons are picked from keywords in each name
+ *  4. Portfolio: one card per project, navy → PGN blue, the project first and the client at the foot;
+ *     more than three projects become a horizontal row with chevrons
+ *  5. slot: anything extra a line needs (optional)
+ * Copy is the line's own (src/data/business.ts); nothing is added beyond small labels.
+ * JS: initServices (line field, chip wave), initScrollers (portfolio row), initVideos, initCounters.
+ */
+import Icon from './Icon.astro';
+import Notch from './Notch.astro';
+import type { Portfolio } from '../data/business';
+import { langOf } from '../i18n';
+const T = langOf(Astro.params) === 'en'
+  ? { play: 'Play video', playOf: 'Play video:', scope: 'Products & Services', scopes: 'scopes of work', projects: 'projects', prev: 'Previous project', next: 'Next project', client: 'Client' }
+  : { play: 'Putar video', playOf: 'Putar video:', scope: 'Produk & Jasa', scopes: 'lingkup pekerjaan', projects: 'proyek', prev: 'Proyek sebelumnya', next: 'Proyek berikutnya', client: 'Klien' };
+
+interface Line {
+  id: string; tag: string; title: string; text: string; image: string; imageAlt: string; video: string;
+  stats: { value: string; unit: string; label: string }[];
+  areas: { title: string; text: string }[];
+  products: string[]; portfolio: Portfolio[];
+  link?: { label: string; href: string };
+}
+// cover/coverAlt: the video's cover photo (defaults to the line's own image)
+// chipOrder: display order for the Produk & Jasa chips (indexes into products), chosen so the
+// centred rows come out near-equal in width; the lists have no inherent order
+// chipLayout 'pairs': two equal columns (for long, sentence-like scopes such as O&M's)
+// cta: a primary button under the lead (e.g. TUK's detail page)
+// lead: a shorter lead for this page (the line's own text stays in the data)
+interface Props { line: Line; index: number; cover?: string; coverAlt?: string; chipOrder?: number[]; chipLayout?: 'flow' | 'pairs'; cta?: { label: string; href: string }; lead?: string }
+const { line: l, index, cover = l.image, coverAlt = l.imageAlt, chipOrder, chipLayout = 'flow', cta, lead = l.text } = Astro.props;
+
+// line icons, picked by keyword (first match wins; order matters)
+const ICONS: [RegExp, string][] = [
+  [/household|rumah tangga/i, 'M3 11 12 4l9 7M5 9.5V20h14V9.5M12 18c-1.6 0-2.6-1-2.6-2.4 0-1.7 2.6-3.2 2.6-4.8 0 1.6 2.6 3.1 2.6 4.8 0 1.4-1 2.4-2.6 2.4Z'],
+  [/spbg/i, 'M5 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16M3 21h13M8 8h3M14 10h2.5l2 2v6.5a1.5 1.5 0 0 1-3 0V15h-1.5'],
+  [/fiber/i, 'M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3.5-3 5-2M2 17c2.5-3 5-3 7.5 0'],
+  [/electric|instrument|fire/i, 'M13 2 4 14h7l-1 8 9-12h-7l1-8Z'],
+  [/udara/i, 'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5Z'],
+  [/patroli|patrol/i, 'M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11ZM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z'],
+  [/mechanical|valve|engine|generator/i, 'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1'],
+  [/risk|corrosion|fmeca/i, 'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3ZM12 8v5M12 16.5v.5'],
+  [/survei|survey|inspect|pigging|acoustic/i, 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 21 21'],
+  [/calibrat|kalibrasi|meter/i, 'M3.5 17a8.5 8.5 0 1 1 17 0M12 17l4.5-5.5M2 17h20'],
+  [/logistic|trading/i, 'M2 6h11v10H2zM13 9.5h4l3.5 3.5V16H13M6 19.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM17 19.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z'],
+  [/plant|facilit/i, 'M3 21V11l5 3v-3l5 3V7l8 4v10M2 21h20M7 17h2M12 17h2M17 17h2'],
+  [/pipe|pipa|hdpe|mdpe|subduct/i, 'M2 8h20M2 15h20M6 6v11M18 6v11M12 8v7'],
+];
+const FALLBACK = 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM8 12l3 3 5-6';
+const iconFor = (name: string) => ICONS.find(([re]) => re.test(name))?.[1] ?? FALLBACK;
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const scopeOrder = chipOrder && chipOrder.length === l.products.length ? chipOrder : l.products.map((_, i) => i);
+const mix = (i: number, n: number) => (n > 1 ? Math.round((i / (n - 1)) * 88) : 0);
+// the source separates some area items with " - " / tabs; show them as a dotted list
+const tidy = (t: string) => t.replace(/\s*-\s+/g, ' · ').replace(/\t/g, '').replace(/\s{2,}/g, ' ').trim();
+const panel = l.stats.length ? 'stats' : l.areas.length ? 'areas' : null;
+const pfScroll = l.portfolio.length > 3;
+---
+<section id={l.id} class="section svc" aria-labelledby={`${l.id}-title`}>
+  <div class="wrap">
+    <header class="svc__head">
+      <div class="svc__head-l">
+        <p class="t-eyebrow svc__tag"><span class="svc__idx">{pad(index + 1)}</span>{l.tag}</p>
+        <h2 id={`${l.id}-title`} class="t-lg svc__title">{l.title}</h2>
+      </div>
+      <div class="svc__head-r" data-reveal="fade">
+        <p class="t-body svc__lead">{lead}</p>
+        {l.link && <a class="svc__link" href={l.link.href}>{l.link.label}<Icon name="arrow" /></a>}
+        {cta && <a class="btn btn--primary svc__cta" href={cta.href}>{cta.label}<span class="visually-hidden"> {l.title}</span></a>}
+      </div>
+    </header>
+
+    <div class:list={['svc-feature', !panel && 'svc-feature--solo']}>
+      {panel && (
+        <div class="svc-panel">
+          <div class="svc-panel__lines" aria-hidden="true" data-lines="rows"></div>
+          {panel === 'stats' ? (
+            <ul class="svc-rows" role="list">
+              {l.stats.map((s) => (
+                <li class="svc-row" data-row>
+                  <p class="svc-stat__num" data-count>{s.value}</p>
+                  <p class="svc-stat__label">{s.unit} {s.label}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul class="svc-rows" role="list">
+              {l.areas.map((a) => (
+                <li class="svc-row" data-row>
+                  <h3 class="svc-area__title">{a.title}</h3>
+                  <p class="svc-area__text">{tidy(a.text)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <div class="svc-media" data-video-host>
+        <div class="svc-media__frame" data-video={l.video} data-label={l.title} data-reveal="img">
+          <button type="button" class="svc-media__btn" aria-label={`${T.playOf} ${l.title}`}>
+            <img src={cover} alt={coverAlt} loading="lazy" decoding="async" data-parallax="0.06" />
+            <span class="svc-play"><span class="svc-play__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" /></svg></span>{T.play}</span>
+          </button>
+        </div>
+        {panel && <Notch dir="right" color="#fff" depth={28} class="svc-media__notch" />}
+        {panel && <Notch dir="down" color="#fff" depth={22} class="svc-media__notch-m" />}
+      </div>
+    </div>
+
+    {l.products.length > 0 && (
+      <div class="svc-block svc-scope">
+        <div class="svc-scope__head">
+          <h3 class="t-md svc-block__title">{T.scope}</h3>
+          <p class="svc-block__meta">{l.products.length} {T.scopes}</p>
+        </div>
+        <ul class:list={['svc-chips', chipLayout === 'pairs' && 'svc-chips--pairs']} role="list" data-chips>
+          {scopeOrder.map((i) => (
+            <li class="chip-x">
+              <span class="chip-x__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d={iconFor(l.products[i])} /></svg></span>
+              <span class="chip-x__name">{l.products[i]}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {l.portfolio.length > 0 && (
+      <div class="svc-block" data-scroller={pfScroll ? '' : undefined}>
+        <div class="svc-block__head">
+          <h3 class="t-md svc-block__title">Portfolio</h3>
+          <div class="svc-block__aside">
+            <p class="svc-block__meta">{l.portfolio.length} {T.projects}</p>
+            {pfScroll && (
+              <div class="svc-block__nav">
+                <button type="button" class="chev-btn chev-btn--prev" data-scroller-prev aria-label={T.prev}><Icon name="chev" /></button>
+                <button type="button" class="chev-btn chev-btn--next" data-scroller-next aria-label={T.next}><Icon name="chev" /></button>
+              </div>
+            )}
+          </div>
+        </div>
+        <ol class:list={['svc-pf', pfScroll && 'svc-pf--scroll', !pfScroll && `svc-pf--n${l.portfolio.length}`]} role="list" data-scroller-track={pfScroll ? '' : undefined}>
+          {l.portfolio.map((p, i) => (
+            <li class="pf-card" style={`--mix:${mix(i, l.portfolio.length)}%`} data-reveal={pfScroll ? undefined : 'fade'}>
+              <span class="pf-card__no" aria-hidden="true">{pad(i + 1)}</span>
+              <p class="pf-card__text">{p.text}</p>
+              {p.client && (
+                <p class="pf-card__client"><span class="pf-card__label">{T.client}</span>{p.client}</p>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
+    )}
+
+    <slot />
+  </div>
+</section>
+
+<style>
+  .svc { overflow-x: clip; }
+  .svc + :global(.svc) { padding-top: clamp(32px, 4vw, 64px); }
+  /* 1 — head */
+  .svc__head { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: end; gap: 24px clamp(32px, 5vw, 96px); }
+  .svc__head-l { display: grid; gap: clamp(14px, 1.4vw, 22px); }
+  .svc__head-r { display: grid; gap: 18px; justify-items: start; }
+  .svc__tag { display: flex; align-items: center; gap: 12px; margin: 0; }
+  .svc__idx { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 6px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 500; }
+  .svc__title { margin: 0; max-width: 18em; text-wrap: balance; }
+  .svc__lead { margin: 0; max-width: 46ch; }
+  .svc__link { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; color: var(--blue-ink); border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+  .svc__link :global(svg) { width: 16px; height: 16px; transition: transform 0.35s var(--ease); }
+  .svc__link:hover { color: var(--blue); }
+  .svc__link:hover :global(svg) { transform: translateX(3px); }
+
+  /* 2 — feature: blue panel + video, same height */
+  .svc-feature { display: grid; grid-template-columns: minmax(280px, 4fr) minmax(0, 8fr); gap: clamp(20px, 2.2vw, 36px); margin-top: clamp(48px, 5vw, 80px); }
+  .svc-feature--solo { grid-template-columns: minmax(0, 1fr); }
+  .svc-panel {
+    position: relative; isolation: isolate; overflow: hidden; border-radius: var(--radius-media, 20px); color: #fff;
+    /* one smooth diagonal: mostly light PGN blue, easing into dark blue toward the bottom-right */
+    background: linear-gradient(165deg, #5cc0ee 0%, #2aa3df 30%, var(--blue) 62%, #1475a8 88%, #0f6290 100%);
+  }
+  .svc-panel__lines { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .svc-panel__lines :global(svg) { position: absolute; left: 0; top: 0; overflow: visible; }
+  .svc-panel__lines :global(.hl-line) { fill: none; stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; }
+  .svc-panel__lines :global(.hl-dot) { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.6)); }
+  .svc-media :global(.svc-media__notch-m) { display: none; }
+  .svc-rows { list-style: none; margin: 0; padding: clamp(8px, 1vw, 14px) clamp(24px, 2.4vw, 36px); height: 100%; display: grid; grid-auto-rows: 1fr; }
+  .svc-row { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: clamp(16px, 1.6vw, 24px) 0; }
+  /* plain dividers until the line field takes over */
+  .svc-panel:not(.has-lines) .svc-row + .svc-row { border-top: 1px solid rgba(255, 255, 255, 0.3); }
+  .svc-stat__num { margin: 0; font-family: var(--display); font-weight: 600; font-size: clamp(48px, 4.6vw, 76px); line-height: 0.85; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .svc-stat__label { margin: 0; font-size: clamp(14px, 1.05vw, 16px); line-height: 1.35; color: rgba(255, 255, 255, 0.92); }
+  .svc-area__title { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.6vw, 24px); line-height: 1.2; color: #fff; }
+  .svc-area__text { margin: 0; font-size: clamp(14px, 1.05vw, 15px); line-height: 1.45; color: rgba(255, 255, 255, 0.9); max-width: 34ch; }
+
+  /* the photo / video */
+  .svc-media { position: relative; }
+  .svc-media__frame { position: relative; height: 100%; min-height: clamp(380px, 34vw, 540px); border-radius: var(--radius-media, 20px); overflow: hidden; background: var(--ink); }
+  .svc-feature--solo .svc-media__frame { height: auto; min-height: 0; aspect-ratio: 21 / 9; }
+  .svc-media__btn { position: absolute; inset: 0; display: block; width: 100%; padding: 0; background: none; cursor: pointer; }
+  .svc-media__btn img { position: absolute; inset: -6% 0; width: 100%; height: 112%; object-fit: cover; transition: transform 1.2s var(--ease), filter 0.6s; }
+  .svc-media__btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 34, 51, 0) 45%, rgba(3, 34, 51, 0.55) 100%); pointer-events: none; }
+  .svc-media__btn:hover img { filter: brightness(0.92); }
+  .svc-media__frame :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  /* notch cut into the middle of the frame's left edge */
+  /* whole-pixel height and offset (no translate) so the notch halves meet without a hairline seam */
+  .svc-media :global(.svc-media__notch) { left: 0; top: calc(50% - 110px); height: 220px; z-index: 2; }
+  /* play: glass pill bottom-right */
+  .svc-play {
+    position: absolute; right: clamp(16px, 2vw, 28px); bottom: clamp(16px, 2vw, 28px); z-index: 2; display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 22px 0 8px; border-radius: 999px;
+    color: #fff; font-size: 15px; font-weight: 500; background: rgba(22, 27, 36, 0.55); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  }
+  .svc-play__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--blue); transition: transform 0.4s var(--ease), background-color 0.3s; }
+  .svc-play__icon svg { width: 16px; height: 16px; fill: #fff; margin-left: 2px; }
+  .svc-media__btn:hover .svc-play__icon { transform: scale(1.12); background: #2aa3df; }
+  .svc-media__btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+
+  /* section blocks */
+  .svc-block { margin-top: clamp(72px, 8vw, 128px); }
+  .svc-block__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: clamp(24px, 2.6vw, 36px); }
+  .svc-block__title { margin: 0; }
+  .svc-block__aside { display: flex; align-items: center; gap: 20px; }
+  .svc-block__meta { margin: 0; font-size: 15px; color: var(--fg-muted); }
+  .svc-block__nav { display: flex; gap: 10px; }
+
+  /* 3 — Produk & Jasa: centred head, chips (natural width) in centred rows */
+  .svc-scope__head { display: grid; justify-items: center; gap: 8px; margin-bottom: clamp(28px, 3vw, 44px); text-align: center; }
+  .svc-chips { list-style: none; margin: 0 auto; padding: 0; max-width: 1080px; display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(10px, 1vw, 14px); }
+  /* pairs: two equal columns, chips fill their cell (long scopes wrap inside) */
+  .svc-chips--pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: none; }
+  .svc-chips--pairs .chip-x { padding-block: 12px; }
+  .chip-x {
+    flex: 0 1 auto; display: inline-flex; align-items: center; gap: 14px; max-width: 100%; padding: 10px 22px 10px 10px; border-radius: 16px;
+    background: #f2f3f5; color: var(--ink); cursor: default;
+    transition: background-color 0.35s, color 0.35s, opacity 0.35s, transform 0.45s var(--ease);
+  }
+  .chip-x__icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; background: #fff; color: var(--blue); transition: background-color 0.35s, color 0.35s; }
+  .chip-x__icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .chip-x__name { font-family: var(--display); font-weight: 500; font-size: clamp(16px, 1.3vw, 20px); line-height: 1.25; }
+  /* hover: the chip fills blue, the rest step back */
+  @media (hover: hover) and (pointer: fine) {
+    .svc-chips:hover .chip-x:not(:hover) { opacity: 0.55; }
+    .chip-x:hover { background: var(--blue); color: #fff; transform: translateY(-3px); }
+    .chip-x:hover .chip-x__icon { background: rgba(255, 255, 255, 0.18); color: #fff; }
+  }
+
+  /* 4 — portfolio cards: navy → PGN blue, like the history cards */
+  .svc-pf { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 20px); }
+  .svc-pf--n1 { grid-template-columns: minmax(0, 1fr); }
+  .svc-pf--n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* more than three: one row that scrolls, bleeding to the page edge */
+  .svc-pf--scroll {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+    margin-inline: calc(var(--pad-x) * -1); padding-inline: var(--pad-x); scroll-padding-inline: var(--pad-x);
+  }
+  .svc-pf--scroll::-webkit-scrollbar { display: none; }
+  .svc-pf--scroll .pf-card { flex: none; width: clamp(290px, 29vw, 420px); scroll-snap-align: start; }
+  .pf-card {
+    position: relative; display: flex; flex-direction: column; gap: 24px; min-height: clamp(300px, 26vw, 380px); padding: clamp(22px, 2.2vw, 32px); border-radius: 18px; overflow: hidden;
+    color: #fff; background: color-mix(in srgb, var(--blue) var(--mix, 0%), var(--ink)); transition: transform 0.5s var(--ease), box-shadow 0.5s;
+  }
+  .pf-card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 80% at 100% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%); }
+  .pf-card:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(3, 34, 51, 0.55); }
+  .svc-pf--scroll .pf-card:hover { transform: none; }
+  .pf-card__no { font-size: 14px; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
+  /* the project is the content; the client sits at the foot, above a hairline */
+  .pf-card__text { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(17px, 1.35vw, 20px); line-height: 1.4; color: #fff; }
+  .pf-card__client { margin: auto 0 0; padding-top: 18px; display: grid; gap: 4px; border-top: 1px solid rgba(255, 255, 255, 0.18); font-size: 15px; font-weight: 500; line-height: 1.3; color: #fff; }
+  .pf-card__label { font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, 0.65); }
+
+  @media (max-width: 1023px) {
+    .svc-pf:not(.svc-pf--scroll) { grid-template-columns: minmax(0, 1fr); }
+    .svc-pf:not(.svc-pf--scroll) .pf-card { min-height: 0; }
+    .svc-pf:not(.svc-pf--scroll) .pf-card__client { margin-top: 8px; }
+  }
+  @media (max-width: 860px) {
+    .svc__head { grid-template-columns: minmax(0, 1fr); }
+    .svc-feature { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .svc-media__frame { height: auto; min-height: 0; aspect-ratio: 4 / 3; }
+    /* stacked: the frame's notch moves to its top edge, facing the panel */
+    .svc-media :global(.svc-media__notch) { display: none; }
+    /* whole-pixel width and offset (no translate) so the notch halves meet without a hairline seam */
+    .svc-media :global(.svc-media__notch-m) { display: flex; left: calc(50% - 100px); top: 0; width: 200px; z-index: 2; }
+    .svc-stat__num { font-size: 52px; }
+    .chip-x { padding-right: 16px; }
+  }
+  @media (max-width: 640px) {
+    /* phones: one full-width chip per line (centred chips of mixed widths zig-zag) */
+    .chip-x { flex: 1 1 100%; }
+    .svc-chips--pairs { grid-template-columns: minmax(0, 1fr); }
+    .svc-play { height: 48px; padding-right: 16px; font-size: 14px; }
+    .svc-play__icon { width: 34px; height: 34px; }
+    .svc-block__head { flex-wrap: wrap; }
+    .svc-pf--scroll .pf-card { width: 82vw; }
+  }
+</style>

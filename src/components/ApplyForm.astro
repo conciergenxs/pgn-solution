@@ -1,0 +1,68 @@
+---
+import Icon from './Icon.astro';
+import { formEndpoint, company } from '../data/site';
+import { langOf } from '../i18n';
+import { content } from '../i18n/content';
+interface Props { position?: string }
+const { position = '' } = Astro.props;
+const lang = langOf(Astro.params);
+const f = content(lang).careers.form;
+const T = {
+  id: { name: 'Nama', email: 'Email', phone: 'No. Handphone', sex: 'Jenis Kelamin', pick: 'Pilih', edu: 'Pendidikan Terakhir', uni: 'Nama Universitas/Sekolah', status: 'Status Calon Pekerja', position: 'Posisi yang Diinginkan', last: 'Perusahaan Terakhir Bekerja', exp: 'Pengalaman bekerja (Dalam Tahun)', expShort: 'Pengalaman bekerja (tahun)', li: 'Link Linkedin', pf: 'Link Portfolio', cv: 'Resume/CV', pdf: 'Format file berupa PDF', required: '* Wajib diisi', send: 'Kirim Lamaran', subject: 'Lamaran' },
+  en: { name: 'Name', email: 'Email', phone: 'Mobile Number', sex: 'Gender', pick: 'Select', edu: 'Last Education', uni: 'University/School Name', status: 'Candidate Status', position: 'Desired Position', last: 'Last Company Worked At', exp: 'Work Experience (In Years)', expShort: 'Work experience (years)', li: 'LinkedIn Link', pf: 'Portfolio Link', cv: 'Resume/CV', pdf: 'File format: PDF', required: '* Required', send: 'Send Application', subject: 'Application' },
+}[lang];
+---
+<form class="form" data-form="career" data-endpoint={formEndpoint} data-mailto={company.email} data-subject={`${T.subject}${position ? ` — ${position}` : ''}`} enctype="multipart/form-data">
+  <div class="form__row">
+    <div class="field"><label for="ap-name">{T.name} <span class="req">*</span></label><input id="ap-name" name="name" data-label={T.name} autocomplete="name" required /></div>
+    <div class="field"><label for="ap-email">{T.email} <span class="req">*</span></label><input id="ap-email" type="email" name="email" data-label={T.email} autocomplete="email" required /></div>
+  </div>
+  <div class="form__row">
+    <div class="field"><label for="ap-phone">{T.phone} <span class="req">*</span></label><input id="ap-phone" type="tel" name="phone" data-label={T.phone} inputmode="tel" autocomplete="tel" pattern="[0-9+()\-\s]{6,}" required /></div>
+    <div class="field">
+      <label for="ap-sex">{T.sex} <span class="req">*</span></label>
+      <select id="ap-sex" name="sex" data-label={T.sex} required>
+        <option value="">{T.pick}</option>
+        {f.sex.map((o) => <option value={o}>{o}</option>)}
+      </select>
+    </div>
+  </div>
+  <div class="form__row">
+    <div class="field">
+      <label for="ap-edu">{T.edu} <span class="req">*</span></label>
+      <select id="ap-edu" name="education" data-label={T.edu} required>
+        <option value="">{T.pick}</option>
+        {f.education.map((o) => <option value={o}>{o}</option>)}
+      </select>
+    </div>
+    <div class="field"><label for="ap-uni">{T.uni} <span class="req">*</span></label><input id="ap-uni" name="university" data-label={T.uni} required /></div>
+  </div>
+  <div class="form__row">
+    <div class="field">
+      <label for="ap-status">{T.status} <span class="req">*</span></label>
+      <select id="ap-status" name="status" data-label={T.status} required>
+        <option value="">{T.pick}</option>
+        {f.status.map((o) => <option value={o}>{o}</option>)}
+      </select>
+    </div>
+    <div class="field"><label for="ap-position">{T.position} <span class="req">*</span></label><input id="ap-position" name="position" data-label={T.position} value={position} required /></div>
+  </div>
+  <div class="form__row">
+    <div class="field"><label for="ap-last">{T.last} <span class="req">*</span></label><input id="ap-last" name="last_worked" data-label={T.last} required /></div>
+    <div class="field"><label for="ap-exp">{T.exp} <span class="req">*</span></label><input id="ap-exp" name="experience" data-label={T.expShort} inputmode="numeric" required /></div>
+  </div>
+  <div class="form__row">
+    <div class="field"><label for="ap-li">{T.li}</label><input id="ap-li" type="url" name="linkedin" data-label={T.li} placeholder="https://" /></div>
+    <div class="field"><label for="ap-pf">{T.pf}</label><input id="ap-pf" type="url" name="portfolio" data-label={T.pf} placeholder="https://" /></div>
+  </div>
+  <div class="field">
+    <label for="ap-cv">{T.cv}</label>
+    <input id="ap-cv" type="file" name="cv" accept="application/pdf" />
+    <span class="field__hint">{T.pdf}</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between">
+    <span class="field__hint">{T.required}</span>
+    <button class="btn btn--primary btn--lg" type="submit">{T.send}</button>
+  </div>
+  <p class="form__status" role="status" aria-live="polite" data-form-status hidden></p>
+</form>

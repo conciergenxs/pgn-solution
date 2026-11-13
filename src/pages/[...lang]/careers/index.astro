@@ -1,0 +1,37 @@
+---
+import { langOf, langPaths } from '../../../i18n';
+import { content } from '../../../i18n/content';
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+const lang = langOf(Astro.params);
+const { careers: c, jobs } = content(lang);
+const L = {
+  id: { title: 'Karir', heroLines: ['Kami Solutionation', 'Hadir untuk', 'Memberikan Solusi'], heroAlt: 'Dua karyawan PGN Solution berseragam melihat laptop bersama di kantor', vac: 'Lowongan', vacText: 'Lowongan tersedia saat ini.', seeVac: 'Lihat Lowongan', app: 'Lamaran', appText: 'Kirim data diri dan Resume/CV dalam format PDF.', fill: 'Isi Formulir' },
+  en: { title: 'Careers', heroLines: ['We Bring Solution,', 'We Are', 'Solutionation'], heroAlt: 'Two PGN Solution employees in uniform looking at a laptop together in the office', vac: 'Vacancies', vacText: 'Vacancies currently open.', seeVac: 'See Vacancies', app: 'Application', appText: 'Send your personal details and Resume/CV in PDF format.', fill: 'Fill in the Form' },
+}[lang];
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={`${c.hero.text}. ${c.workWith.text}`} image="/media/hero/career.jpg">
+  <PageHero eyebrow={L.title} title={c.hero.text} text={c.workWith.text} image="/media/hero/career.webp" imageSrcset="/media/hero/career.webp 1774w, /media/hero/career@2x.webp 3548w" imageAlt={L.heroAlt} crumbs={[{ label: L.title }]} lines={L.heroLines} />
+
+  <section class="section" aria-labelledby="vac-title">
+    <div class="wrap">
+      <SectionHead eyebrow={c.vacancy.eyebrow} title={c.vacancy.title} text={c.vacancy.text} id="vac-title" size="lg" maxw="24ch" />
+      <div class="cards narrow" style="--n:2">
+        <div class="card" data-reveal="fade">
+          <p class="t-mono">{L.vac}</p>
+          <p class="t-xl t-num">{jobs.length}</p>
+          <p class="t-body" style="flex:1">{L.vacText}</p>
+          <a class="btn btn--soft btn--block" href="/careers/opportunities">{L.seeVac}</a>
+        </div>
+        <div class="card theme-dark" data-reveal="fade">
+          <p class="t-mono">{L.app}</p>
+          <p class="t-xl">Apply</p>
+          <p class="t-body" style="flex:1">{L.appText}</p>
+          <a class="btn btn--primary btn--block" href="/careers/apply">{L.fill}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

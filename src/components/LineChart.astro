@@ -1,0 +1,68 @@
+---
+// tone 'light': colours for a white background (default: dark band)
+interface Props { labels: string[]; data: number[]; series: string; unit: string; title: string; tone?: 'dark' | 'light' }
+const { labels, data, series, unit, title, tone = 'dark' } = Astro.props;
+const W = 560, H = 200, P = { t: 18, r: 14, b: 30, l: 14 };
+const max = Math.max(...data), min = Math.min(0, ...data);
+const x = (i: number) => P.l + (i * (W - P.l - P.r)) / Math.max(1, data.length - 1);
+const y = (v: number) => P.t + (1 - (v - min) / (max - min || 1)) * (H - P.t - P.b);
+const pts = data.map((v, i) => [x(i), y(v)] as const);
+const d = pts.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)},${py.toFixed(1)}`).join(' ');
+const area = `${d} L${x(data.length - 1).toFixed(1)},${H - P.b} L${x(0).toFixed(1)},${H - P.b} Z`;
+const fmt = (v: number) => v.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+const gid = `g-${series.replace(/\W+/g, '')}`;
+import { langOf } from '../i18n';
+---
+<figure class:list={['chart', tone === 'light' && 'chart--light']} data-chart>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}: grafik ${series} ${labels[0]}–${labels[labels.length - 1]}`}>
+    <defs>
+      <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#1a90ca" stop-opacity="0.28" />
+        <stop offset="1" stop-color="#1a90ca" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    {[0.25, 0.5, 0.75].map((k) => <line x1={P.l} x2={W - P.r} y1={P.t + k * (H - P.t - P.b)} y2={P.t + k * (H - P.t - P.b)} class="chart__grid" />)}
+    <line x1={P.l} x2={W - P.r} y1={H - P.b} y2={H - P.b} class="chart__axis" />
+    <path d={area} fill={`url(#${gid})`} />
+    <path d={d} class="chart__line" pathLength="1" />
+    {pts.map(([px, py], i) => (
+      <g data-point data-label={labels[i]} data-value={`${fmt(data[i])} ${unit}`} tabindex="0" class="chart__pt" aria-label={`${labels[i]}: ${fmt(data[i])} ${unit}`}>
+        <circle cx={px} cy={py} r="14" fill="transparent" />
+        <circle cx={px} cy={py} r="3.5" class="chart__dot" />
+      </g>
+    ))}
+    {labels.map((l, i) => <text x={x(i)} y={H - 8} class="chart__label" text-anchor={i === 0 ? 'start' : i === labels.length - 1 ? 'end' : 'middle'}>{l}</text>)}
+  </svg>
+  <span class="chart__tip" data-chart-tip hidden></span>
+  <table class="visually-hidden">
+    <caption>{title}</caption>
+    <tr><th scope="col">{langOf(Astro.params) === 'en' ? 'Year' : 'Tahun'}</th><th scope="col">{series}</th></tr>
+    {labels.map((l, i) => <tr><td>{l}</td><td>{fmt(data[i])}</td></tr>)}
+  </table>
+</figure>
+
+<style>
+  .chart { position: relative; margin: 0; }
+  .chart svg { width: 100%; height: auto; overflow: visible; }
+  .chart__grid { stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .chart__axis { stroke: rgba(255, 255, 255, 0.25); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .chart__line { fill: none; stroke: #5bb8e6; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2s cubic-bezier(0.65, 0, 0.35, 1); }
+  :global(.is-in) .chart__line { stroke-dashoffset: 0; }
+  .chart__dot { fill: #031e2f; stroke: #5bb8e6; stroke-width: 1.5; vector-effect: non-scaling-stroke; transition: r 0.2s; }
+  .chart__pt { cursor: pointer; outline: none; }
+  .chart__pt:is(:hover, :focus-visible, .is-active) .chart__dot { fill: #5bb8e6; r: 6; }
+  .chart__label { fill: #9cb0bc; font-size: 11px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+  .chart__tip {
+    position: absolute; transform: translate(-50%, calc(-100% - 12px)); pointer-events: none;
+    background: #fff; color: #031e2f; font-size: 0.8125rem; font-weight: 600; padding: 6px 10px; white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) { .chart__line { stroke-dashoffset: 0; } }
+  /* light tone (white sections) */
+  .chart--light .chart__grid { stroke: rgba(3, 34, 51, 0.07); }
+  .chart--light .chart__axis { stroke: rgba(3, 34, 51, 0.18); }
+  .chart--light .chart__line { stroke: var(--blue); }
+  .chart--light .chart__dot { fill: #fff; stroke: var(--blue); }
+  .chart--light .chart__pt:is(:hover, :focus-visible, .is-active) .chart__dot { fill: var(--blue); }
+  .chart--light .chart__label { fill: var(--fg-muted); }
+  .chart--light .chart__tip { background: var(--ink); color: #fff; border-radius: 6px; }
+</style>

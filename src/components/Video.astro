@@ -1,0 +1,11 @@
+---
+interface Props { src: string; poster: string; label: string }
+const { src, poster, label } = Astro.props;
+import { langOf } from '../i18n';
+---
+<div class="video" data-video={src} data-label={label}>
+  <button type="button" aria-label={`Putar video: ${label}`}>
+    <img src={poster} alt="" loading="lazy" decoding="async" />
+    <span class="video__play"><span class="btn btn--secondary btn--lg">{langOf(Astro.params) === 'en' ? 'Play Video' : 'Putar Video'}</span></span>
+  </button>
+</div>

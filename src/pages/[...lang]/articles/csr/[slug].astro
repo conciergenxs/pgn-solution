@@ -1,0 +1,14 @@
+---
+import { LANGS, langParam, type Lang } from '../../../../i18n';
+import ArticleDetail from '../../../../components/ArticleDetail.astro';
+import { articlesBy, type Article } from '../../../../lib/content';
+export function getStaticPaths() {
+  // each path once per locale
+  const paths = (lang: Lang) => {
+    return articlesBy('csr').map((article) => ({ params: { slug: article.slug }, props: { article } }));
+  };
+  return LANGS.flatMap((lang) => paths(lang).map((p) => ({ ...p, params: { ...p.params, lang: langParam(lang) } })));
+}
+const { article } = Astro.props as { article: Article };
+---
+<ArticleDetail article={article} />

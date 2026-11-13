@@ -1,0 +1,17 @@
+---
+interface Props { items: { label: string; href: string }[]; label?: string }
+const { items, label = langOf(Astro.params) === 'en' ? 'Page navigation' : 'Navigasi halaman' } = Astro.props;
+import { langOf } from '../i18n';
+---
+<!-- Floating section nav: same glass and height as the header; the active item is a white pill
+     set apart by pinched necks (like the header's logo and CTA). JS: initSubnav / updateSubnavShape. -->
+<nav class="subnav" aria-label={label} data-subnav>
+  <div class="subnav__pill" data-subnav-pill>
+    <span class="subnav__bg" data-subnav-bg aria-hidden="true"></span>
+    <svg class="subnav__edge" aria-hidden="true" focusable="false"><path data-subnav-edge /></svg>
+    <div class="subnav__inner" data-subnav-list>
+      <span class="subnav__ind" data-subnav-ind aria-hidden="true"></span>
+      {items.map((i) => <a href={i.href}>{i.label}</a>)}
+    </div>
+  </div>
+</nav>

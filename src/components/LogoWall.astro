@@ -1,0 +1,17 @@
+---
+interface Props { logos: string[]; label: string; cols?: number }
+const { logos, label, cols = 10 } = Astro.props;
+import { langOf } from '../i18n';
+---
+<div class="logo-wall" role="region" aria-label={label}>
+  <ul class="xgrid" role="list" style={`--cols:${cols}`}>
+    {logos.map((src) => <li><img src={src} alt="" loading="lazy" decoding="async" /></li>)}
+  </ul>
+  <p class="visually-hidden">{langOf(Astro.params) === 'en' ? `${logos.length} logos of PT PGAS Solution clients and partners.` : `Logo ${logos.length} klien dan mitra PT PGAS Solution.`}</p>
+</div>
+<style>
+  .logo-wall { overflow: hidden; padding-top: 12px; }
+  @media (max-width: 1400px) { .logo-wall :global(.xgrid) { --cols: 8 !important; } }
+  @media (max-width: 1100px) { .logo-wall :global(.xgrid) { --cols: 6 !important; } }
+  @media (max-width: 760px) { .logo-wall :global(.xgrid) { --cols: 4 !important; --cell: calc((100vw - 40px) / 4); } }
+</style>

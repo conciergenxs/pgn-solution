@@ -1,0 +1,102 @@
+---
+/**
+ * Horizontal year accordion (Tentang Kami "Sejarah", GCG "Roadmap"): collapsed years are slim columns
+ * (year upright + one dot per item); the open year is a card that runs navy → PGN blue across the
+ * years, with its items, the big year, faint lines with travelling lights and an autoplay progress bar.
+ * Below 1366px it becomes a vertical accordion. JS: initHistory (open/hover/keys/autoplay) and
+ * initHistoryLines (the lines) in src/scripts/app.ts — both read [data-history].
+ *
+ * wide: the open card's text may use the card's full open width (fewer years → wider card)
+ * height: the desktop row height (CSS length)
+ * dense: years with more items than this show them in two columns on desktop
+ */
+interface Year { year: string; items: string[] }
+interface Props { years: Year[]; label: string; unit?: string; wide?: boolean; height?: string; dense?: number }
+const { years, label, unit = 'item', wide = false, height, dense = 99 } = Astro.props;
+const style = [`--n:${years.length}`, wide && '--panel-max:100cqi', height && `--yrs-h:${height}`].filter(Boolean).join(';');
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<div class="yacc" data-history>
+  <div class="yrs" role="tablist" aria-label={label} data-yrs style={style}>
+    {years.map((y, i) => (
+      <div class:list={['yr', i === 0 && 'is-active', y.items.length > dense && 'yr--dense']} data-yr style={`--count:${y.items.length};--yr-mix:${Math.round((i / Math.max(1, years.length - 1)) * 88)}%`}>
+        <button type="button" class="yr__tab" role="tab" id={`yr-tab-${y.year}`} aria-controls={`yr-${y.year}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-yr-tab>
+          <span class="yr__dots" aria-hidden="true">{y.items.map(() => <i></i>)}</span>
+          <span class="yr__label">{y.year}</span>
+          <span class="visually-hidden">, {y.items.length} {unit}</span>
+        </button>
+        <div class="yr__lines" aria-hidden="true" data-yr-lines></div>
+        <div class="yr__panel" id={`yr-${y.year}`} role="tabpanel" aria-labelledby={`yr-tab-${y.year}`}>
+          <ol class="yr__items" role="list">
+            {y.items.map((it, j) => <li><span class="yr__idx">{pad(j + 1)}</span><span>{it}</span></li>)}
+          </ol>
+          <p class="yr__big t-num" aria-hidden="true">{y.year}</p>
+        </div>
+        <span class="yr__prog" aria-hidden="true"></span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  /* lines + travelling light inside the open year card (JS: initHistoryLines) */
+  .yr__lines { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+  .yr.is-active .yr__lines { opacity: 1; transition: opacity 0.45s 0.08s; }
+  /* fixed px size (the card's final open size), pinned top-left: revealed as the card widens */
+  .yr__lines :global(svg) { position: absolute; left: 0; top: 0; overflow: visible; }
+  .yr__lines :global(.hl-line) { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 1; }
+  .yr__lines :global(.hl-dot) { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 12px rgba(108, 196, 238, 0.7)); }
+  /* year accordion */
+  .yrs { display: flex; gap: 6px; height: var(--yrs-h, clamp(470px, 36vw, 540px)); container-type: inline-size; }
+  .yr { position: relative; flex: 0 0 60px; min-width: 0; border-radius: 16px; overflow: hidden; background: var(--biz-bg, #f5f6f7); transition: flex-basis 0.7s var(--ease), flex-grow 0.7s var(--ease), background-color 0.5s; }
+  .yr:not(.is-active):hover { background: #e9edf0; }
+  /* the open card brightens year by year: deep navy (2009) → PGN blue (2023) */
+  .yr.is-active { flex: 1 1 auto; background: color-mix(in srgb, var(--blue) var(--yr-mix, 0%), var(--ink)); color: #fff; }
+  /* collapsed column: year (vertical) at the top, one dot per event at the bottom */
+  .yr__tab { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column-reverse; align-items: center; justify-content: space-between; padding: 20px 0 22px; background: none; color: inherit; cursor: pointer; }
+  .yr.is-active .yr__tab { pointer-events: none; }
+  .yr__tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -4px; border-radius: 16px; }
+  /* dots = number of events that year */
+  .yr__dots { display: grid; gap: 5px; justify-items: center; }
+  .yr__dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); opacity: 0.85; }
+  .yr__label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink); }
+  .yr.is-active .yr__dots, .yr.is-active .yr__label { opacity: 0; transition: opacity 0.2s; }
+  /* open panel */
+  .yr__panel { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; padding: clamp(24px, 2.2vw, 32px); /* fixed to the open card's final width so text doesn't reflow while it widens */
+    width: min(var(--panel-max, clamp(420px, 36vw, 560px)), calc(100cqi - (var(--n, 13) - 1) * 66px)); opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0s 0.3s; }
+  .yr.is-active .yr__panel { opacity: 1; visibility: visible; transition: opacity 0.5s 0.25s, visibility 0s; }
+  .yr__items { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .yr__items { position: relative; z-index: 1; }
+  .yr__items > li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1.42; color: rgba(255, 255, 255, 0.9); }
+  .yr__idx { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); }
+  /* same place and full white for every year */
+  .yr__big { margin: 0; font-family: var(--display); font-weight: 600; font-size: clamp(60px, 5.4vw, 84px); line-height: 0.85; letter-spacing: -0.01em; color: #fff; }
+  /* autoplay progress along the bottom of the open year */
+  .yr__prog { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 3px; background: rgba(255, 255, 255, 0.85); transform-origin: left; transform: scaleX(0); opacity: 0; }
+  .yrs.is-auto .yr.is-active .yr__prog { opacity: 1; animation: hist-progress var(--auto, 5s) linear forwards; }
+  .yrs.is-paused .yr__prog { animation-play-state: paused !important; }
+  @keyframes hist-progress { to { transform: scaleX(1); } }
+  /* narrow screens: vertical accordion */
+  @media (max-width: 1365px) {
+    .yrs { flex-direction: column; height: auto; gap: 6px; }
+    .yr { flex: none; height: 60px; transition: height 0.6s var(--ease), background-color 0.4s; }
+    .yr.is-active { height: auto; }
+    .yr__tab { position: relative; inset: auto; width: 100%; height: 60px; flex-direction: row-reverse; justify-content: space-between; padding: 0 20px; }
+    .yr.is-active .yr__tab { position: absolute; inset: 0 0 auto 0; }
+    /* open row keeps its year visible (white) above the list */
+    .yr.is-active .yr__dots, .yr.is-active .yr__label { opacity: 1; }
+    .yr.is-active .yr__label { color: #fff; }
+    .yr.is-active .yr__dots i { background: var(--blue-lit); }
+    .yr__label { writing-mode: horizontal-tb; transform: none; font-size: 20px; }
+    .yr__dots { display: flex; gap: 5px; }
+    .yr__panel { position: relative; width: auto; display: none; padding-top: 72px; }
+    .yr__big { display: none; }
+    .yr.is-active .yr__panel { display: flex; }
+    .yr__big { font-size: 64px; }
+  }
+  /* dense years: two columns of items on desktop */
+  @media (min-width: 1366px) {
+    .yr--dense .yr__items { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; row-gap: 12px; align-content: start; }
+    .yr--dense .yr__items > li { font-size: 13.5px; }
+  }
+</style>

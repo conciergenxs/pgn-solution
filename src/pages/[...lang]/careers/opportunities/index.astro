@@ -1,0 +1,54 @@
+---
+import { langOf, langPaths } from '../../../../i18n';
+import { content } from '../../../../i18n/content';
+import Base from '../../../../layouts/Base.astro';
+const lang = langOf(Astro.params);
+const { careers: c, jobs } = content(lang);
+const L = {
+  id: { title: 'Lowongan', lines: ['Tempat untuk mengeksplorasi', 'ide-ide inovatif'], open: 'lowongan tersedia', none: 'Saat ini belum ada lowongan yang dibuka.', noneText: 'Anda tetap dapat mengirimkan lamaran dan CV melalui formulir lamaran.', send: 'Kirim Lamaran' },
+  en: { title: 'Vacancies', lines: ['A place to explore', 'innovative ideas'], open: 'open vacancies', none: 'There are no open vacancies at the moment.', noneText: 'You can still send your application and CV through the application form.', send: 'Send Application' },
+}[lang];
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={c.vacancy.text}>
+  <section class="phero gridbg">
+    <div class="wrap phero__inner">
+      <p class="t-eyebrow hero-fade">{c.vacancy.eyebrow}</p>
+      <h1 class="t-xl phero__title" aria-label={c.vacancy.title}>
+        {L.lines.map((l) => <span class="line-mask" aria-hidden="true"><span>{l}</span></span>)}
+      </h1>
+      <p class="t-body hero-fade">{c.vacancy.title}. {c.vacancy.text}</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0" aria-labelledby="list-title">
+    <div class="wrap narrow">
+      <div class="head-row"><h2 id="list-title" class="t-lg"><span class="t-num">{jobs.length}</span> {L.open}</h2></div>
+      {jobs.length ? (
+        <ul class="acc" role="list">
+          {jobs.map((j) => (
+            <li>
+              <a class="job" href={`/careers/opportunities/${j.slug}`}>
+                <span class="t-card">{j.title}</span>
+                <span class="job__meta"><span class="chip">{j.status}</span>{j.location && <span class="t-mono">{j.location}</span>}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="empty">
+          <p class="t-md">{L.none}</p>
+          <p class="t-body">{L.noneText}</p>
+          <a class="btn btn--primary btn--lg" href="/careers/apply">{L.send}</a>
+        </div>
+      )}
+    </div>
+  </section>
+</Base>
+<style>
+  .job { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 28px 0; flex-wrap: wrap; }
+  .job:hover .t-card { color: var(--blue-ink); }
+  .job__meta { display: flex; gap: 12px; align-items: center; }
+  .acc li::after { content: ''; display: block; height: 1px; background: var(--line); }
+  .acc { list-style: none; margin: 0; padding: 0; }
+</style>

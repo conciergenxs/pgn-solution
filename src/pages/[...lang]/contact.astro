@@ -1,0 +1,188 @@
+---
+import { langOf, langPaths } from '../../i18n';
+import { content } from '../../i18n/content';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import SubNav from '../../components/SubNav.astro';
+import ContactForm from '../../components/ContactForm.astro';
+import Icon from '../../components/Icon.astro';
+import Notch from '../../components/Notch.astro';
+const lang = langOf(Astro.params);
+const c = content(lang).contact;
+const L = {
+  id: { title: 'Kontak', heroAlt: 'Stasiun gas dengan pipa dan tangki kuning saat matahari terbenam', hq: 'Kantor Pusat', areas: 'Area Operasional', address: 'Alamat', maps: 'Buka di Google Maps', phone: 'Telepon', fax: 'Fax', email: 'Email', formTitle: 'Hubungi kami untuk keperluan Anda', subject: 'Pesan dari website PGN Solution', locations: 'lokasi', search: 'Cari kota atau alamat', onMap: (city: string) => `Lihat ${city} di peta`, none: 'Tidak ada lokasi yang cocok. Coba kata kunci lain, misalnya nama kota.' },
+  en: { title: 'Contact', heroAlt: 'Gas station with yellow pipes and tanks at sunset', hq: 'Headquarters', areas: 'Branch Offices', address: 'Address', maps: 'Open in Google Maps', phone: 'Phone', fax: 'Fax', email: 'Email', formTitle: 'Talk to our experts about your requirements', subject: 'Message from the PGN Solution website', locations: 'locations', search: 'Search a city or address', onMap: (city: string) => `See ${city} on the map`, none: 'No matching location. Try another keyword, such as a city name.' },
+}[lang];
+const hq = c.headquarters;
+const tel = (s: string) => s.split('/')[0].replace(/[^\d+]/g, '');
+// +6281211888645 → +62 812 1188 8645 (display only; the link keeps the plain number)
+const spaced = (n: string) => n.replace(/^\+62(\d{3})(\d{4})(\d+)$/, '+62 $1 $2 $3');
+const mapQuery = encodeURIComponent(`${hq.name}, ${hq.address}`);
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={c.hero.text} image="/media/hero/contact.jpg" hideCta>
+  <PageHero eyebrow={L.title} title={c.hero.title} text={c.hero.text} image="/media/hero/contact.webp" imageSrcset="/media/hero/contact.webp 1672w, /media/hero/contact@2x.webp 3344w" imageAlt={L.heroAlt} crumbs={[{ label: L.title }]} />
+  <SubNav items={[{ label: L.hq, href: '#headquarters' }, { label: L.areas, href: '#branch-office' }]} />
+
+  <!-- KANTOR PUSAT: contact tiles on the left, the message form on the right -->
+  <section id="headquarters" class="section ct-hq" aria-labelledby="hq-title">
+    <div class="wrap ct-hq__grid">
+      <div class="ct-info">
+        <div class="ct-head">
+          <p class="t-eyebrow">{L.hq}</p>
+          <h2 id="hq-title" class="t-lg">{hq.name}</h2>
+        </div>
+        <ul class="ct-tiles" role="list">
+          <li>
+            <a class="ct-tile" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noopener">
+              <span class="ct-tile__icon" aria-hidden="true"><Icon name="pin" /></span>
+              <span class="ct-tile__text">
+                <span class="ct-tile__label">{L.address}</span>
+                <address class="ct-tile__value">{hq.address}</address>
+                <span class="ct-tile__link">{L.maps}</span>
+              </span>
+              <span class="ct-tile__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </a>
+          </li>
+          <li>
+            <a class="ct-tile" href={`tel:${tel(hq.phone)}`}>
+              <span class="ct-tile__icon" aria-hidden="true"><Icon name="phone" /></span>
+              <span class="ct-tile__text"><span class="ct-tile__label">{L.phone}</span><span class="ct-tile__value">{hq.phone}</span></span>
+              <span class="ct-tile__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </a>
+          </li>
+          <li id="hotline-center">
+            <a class="ct-tile" href={c.hotline.href} target="_blank" rel="noopener">
+              <span class="ct-tile__icon" aria-hidden="true"><Icon name="whatsapp" /></span>
+              <span class="ct-tile__text">
+                <span class="ct-tile__label">{c.hotline.title} (WhatsApp)</span>
+                <span class="ct-tile__value">{spaced(c.hotline.number)}</span>
+              </span>
+              <span class="ct-tile__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </a>
+          </li>
+          <li>
+            <div class="ct-tile">
+              <span class="ct-tile__icon" aria-hidden="true"><Icon name="doc" /></span>
+              <span class="ct-tile__text"><span class="ct-tile__label">{L.fax}</span><span class="ct-tile__value">{hq.fax}</span></span>
+            </div>
+          </li>
+          <li>
+            <a class="ct-tile" href={`mailto:${hq.email}`}>
+              <span class="ct-tile__icon" aria-hidden="true"><Icon name="mail" /></span>
+              <span class="ct-tile__text"><span class="ct-tile__label">{L.email}</span><span class="ct-tile__value">{hq.email}</span></span>
+              <span class="ct-tile__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="ct-form theme-dark">
+        <Notch dir="down" color="#fff" depth={28} style="top:0;right:12%;width:38%" />
+        <div class="ct-head">
+          <p class="t-eyebrow" style="color:rgba(255,255,255,.6)">{c.formTitle}</p>
+          <h3 class="ct-form__title">{L.formTitle}</h3>
+        </div>
+        <ContactForm mailto={hq.email} subject={L.subject} />
+      </div>
+    </div>
+  </section>
+
+  <!-- AREA OPERASIONAL: head with search, then compact white cards -->
+  <section id="branch-office" class="section ct-areas-sec" aria-labelledby="areas-title">
+    <div class="wrap">
+      <div class="ct-areas-head">
+        <div class="ct-head">
+          <p class="t-eyebrow">{c.areas.length} {L.locations}</p>
+          <h2 id="areas-title" class="t-lg">{c.areasTitle}</h2>
+        </div>
+        <label class="ct-search">
+          <span class="visually-hidden">{L.search}</span>
+          <Icon name="search" />
+          <input type="search" placeholder={L.search} data-filter-input="#area-list" data-filter-empty="#area-empty" />
+        </label>
+      </div>
+      <ul id="area-list" class="ct-areas" role="list">
+        {c.areas.map((a) => (
+          <li class="ct-area" data-filter-text={`${a.city} ${a.address}`}>
+            <div class="ct-area__top">
+              <h3 class="ct-area__city">{a.city}</h3>
+              <a class="ct-area__map" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address)}`} target="_blank" rel="noopener" aria-label={L.onMap(a.city)}><Icon name="pin" /></a>
+            </div>
+            <p class="ct-area__addr">{a.address}</p>
+            {(a.phone !== '-' || a.fax !== '-') && (
+              <p class="ct-area__tel">
+                {a.phone !== '-' && <a href={`tel:${tel(a.phone)}`}><Icon name="phone" />{a.phone}</a>}
+                {a.fax !== '-' && <span>Fax {a.fax}</span>}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div id="area-empty" class="empty" hidden><p class="t-body">{L.none}</p></div>
+    </div>
+  </section>
+
+</Base>
+
+<style>
+  .ct-head { display: grid; gap: 14px; }
+  .ct-head :global(.t-eyebrow), .ct-head h2, .ct-head h3 { margin: 0; }
+
+  /* KANTOR PUSAT */
+  .ct-hq__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 4.5vw, 80px); align-items: start; }
+  .ct-info { display: grid; gap: clamp(28px, 3vw, 40px); }
+  /* the shorter column rides along beside the form */
+  @media (min-width: 1001px) { .ct-info { position: sticky; top: calc(var(--header-top) + var(--header-h) + 32px); } }
+  .ct-tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .ct-tile {
+    display: flex; align-items: center; gap: 16px; padding: 14px 14px 14px 14px; border-radius: 16px; background: #f2f3f5; color: var(--ink); text-decoration: none;
+    transition: background-color 0.35s, color 0.35s;
+  }
+  .ct-tile__icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; background: #fff; color: var(--blue); transition: background-color 0.35s, color 0.35s; }
+  .ct-tile__icon :global(svg) { width: 20px; height: 20px; }
+  .ct-tile__text { display: grid; gap: 3px; flex: 1; min-width: 0; }
+  .ct-tile__label { font-size: 13px; color: var(--fg-muted); transition: color 0.35s; }
+  .ct-tile__value { font-size: 16px; font-weight: 500; font-style: normal; line-height: 1.45; overflow-wrap: anywhere; }
+  .ct-tile__link { margin-top: 4px; font-size: 13px; font-weight: 500; color: var(--blue-ink); transition: color 0.35s; }
+  .ct-tile__go { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--blue); color: #fff; transition: background-color 0.35s, color 0.35s; }
+  .ct-tile__go :global(svg) { width: 16px; height: 16px; transition: transform 0.45s var(--ease); }
+  .ct-tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) {
+    a.ct-tile:hover { background: var(--blue); color: #fff; }
+    a.ct-tile:hover .ct-tile__icon { background: rgba(255, 255, 255, 0.18); color: #fff; }
+    a.ct-tile:hover .ct-tile__label, a.ct-tile:hover .ct-tile__link { color: rgba(255, 255, 255, 0.85); }
+    a.ct-tile:hover .ct-tile__go { background: #fff; color: var(--blue); }
+    a.ct-tile:hover .ct-tile__go :global(svg) { transform: translate(2px, -2px); }
+  }
+  .ct-form { position: relative; display: grid; gap: clamp(28px, 3vw, 40px); padding: clamp(52px, 5vw, 72px) clamp(24px, 3.6vw, 56px) clamp(28px, 3.6vw, 56px); border-radius: var(--radius-card); }
+  .ct-form__title { font-family: var(--display); font-weight: 500; font-size: clamp(24px, 2.2vw, 32px); line-height: 1.15; letter-spacing: -0.01em; color: #fff; }
+  @media (max-width: 1000px) { .ct-hq__grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* AREA OPERASIONAL */
+  .ct-areas-sec { padding-top: 0; padding-bottom: clamp(96px, 10vw, 150px); }
+  .ct-areas-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px 40px; flex-wrap: wrap; margin-bottom: clamp(28px, 3vw, 40px); }
+  .ct-search { display: flex; align-items: center; gap: 12px; width: min(420px, 100%); min-height: 52px; padding: 0 18px; border-radius: var(--radius-btn); background: #f2f3f5; }
+  .ct-search :global(svg) { flex: none; width: 18px; height: 18px; color: var(--fg-muted); }
+  .ct-search input { width: 100%; border: 0; outline: none; background: transparent; font-size: 16px; color: var(--ink); }
+  .ct-search:focus-within { box-shadow: 0 0 0 2px var(--blue); }
+  .ct-areas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.2vw, 16px); }
+  .ct-area {
+    display: flex; flex-direction: column; gap: 10px; padding: 20px 20px 18px; border-radius: 18px; background: #fff;
+    box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.06), 0 1px 2px rgba(var(--ink-rgb), 0.04);
+  }
+  .ct-area[hidden] { display: none; }
+  .ct-area__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ct-area__city { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(18px, 1.35vw, 20px); line-height: 1.25; color: var(--ink); }
+  .ct-area__map { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #f2f3f5; color: var(--blue); transition: background-color 0.3s, color 0.3s; }
+  .ct-area__map :global(svg) { width: 16px; height: 16px; }
+  .ct-area__map:hover { background: var(--blue); color: #fff; }
+  .ct-area__addr { flex: 1; margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-muted); }
+  .ct-area__tel { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; padding-top: 12px; border-top: 1px solid rgba(var(--ink-rgb), 0.08); font-size: 14px; }
+  .ct-area__tel a { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ct-area__tel a:hover { color: var(--blue-ink); }
+  .ct-area__tel :global(svg) { width: 14px; height: 14px; color: var(--blue); }
+  @media (max-width: 1100px) { .ct-areas { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 800px) { .ct-areas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 540px) { .ct-areas { grid-template-columns: minmax(0, 1fr); } }
+
+</style>

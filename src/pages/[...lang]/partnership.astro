@@ -1,0 +1,189 @@
+---
+import { langOf, langPaths } from '../../i18n';
+import { content } from '../../i18n/content';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import Icon from '../../components/Icon.astro';
+const lang = langOf(Astro.params);
+const p = content(lang).partnership;
+const L = {
+  id: { heroAlt: 'Dua pekerja berhelm proyek berjabat tangan di depan fasilitas pipa gas saat senja', pdf: 'Dokumen PDF', site: 'Website', none: 'Belum ada pengumuman saat ini.', noneText: 'Pengumuman pengadaan akan ditampilkan di halaman ini. Untuk mendaftar sebagai penyedia barang/jasa, gunakan tautan pada bagian Tata Cara.', see: 'Lihat Tata Cara' },
+  en: { heroAlt: 'Two workers in hard hats shaking hands in front of a gas pipeline facility at dusk', pdf: 'PDF document', site: 'Website', none: 'There are no announcements at the moment.', noneText: 'Procurement announcements will appear on this page. To register as a goods/services vendor, use the links in the Procedures section.', see: 'See Procedures' },
+}[lang];
+export const getStaticPaths = langPaths;
+---
+<Base title="Partnership" description={p.hero.text} image="/media/hero/partnership.jpg">
+  <PageHero eyebrow="Partnership" title={p.hero.title} text={p.hero.text} image="/media/hero/partnership.webp" imageSrcset="/media/hero/partnership.webp 1774w, /media/hero/partnership@2x.webp 3548w" imageAlt={L.heroAlt} crumbs={[{ label: 'Partnership' }]} />
+
+  <section id="procedure" class="section proc-sec" aria-labelledby="proc-title">
+    <div class="wrap">
+      <SectionHead title={p.procedureTitle} text={p.summary} id="proc-title" size="lg" />
+      <ul class="pc" role="list">
+        {p.procedureGroups.map((g, i) => {
+          const items = g.items.map((k) => p.procedures[k]);
+          const kinds = [...new Set(items.map((it) => (it.kind === 'pdf' ? 'PDF' : 'Link')))];
+          const icon = kinds.length === 1 && kinds[0] === 'Link' ? 'globe' : 'doc';
+          return (
+            <li class="pc__card" data-reveal="fade" style={`transition-delay:${i * 70}ms`}>
+              <div class="pc__media" aria-hidden="true">
+                <span class="pc__glyph"><Icon name={icon} /></span>
+                <span class="pc__tag">{kinds.join(' + ')}</span>
+              </div>
+              <div class="pc__body">
+                <h3 class="pc__title">{g.title}</h3>
+                <ul class="pc__files" role="list">
+                  {items.map((it) => {
+                    const pdf = it.kind === 'pdf';
+                    const host = new URL(it.href).hostname;
+                    // a single-item topic already carries the item's name as its title
+                    const same = it.title === g.title;
+                    return (
+                      <li>
+                        <a class="pc__file" href={it.href} target="_blank" rel="noopener">
+                          <span class="pc__file-text">
+                            <span class="pc__file-name">{same ? host : it.title}</span>
+                            <span class="pc__file-meta">{pdf ? L.pdf : same ? L.site : host}</span>
+                          </span>
+                          <span class="visually-hidden">{it.action}</span>
+                          <span class="pc__btn" aria-hidden="true"><Icon name={pdf ? 'download' : 'arrow-up-right'} /></span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </section>
+
+  <section id="announcement" class="section ann-sec" aria-labelledby="ann-title">
+    <div class="wrap">
+      <SectionHead title={p.announcementTitle} id="ann-title" size="lg" />
+      {p.announcements.length ? (
+        <ul class="ann-list" role="list">
+          {p.announcements.map((a) => (
+            <li>
+              <a class="ann-item" href={a.href}>
+                <span class="ann-item__date">{a.date}</span>
+                <span class="ann-item__title">{a.title}</span>
+                <span class="pc__btn" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="ann-empty" data-reveal="fade">
+          <div class="pc__media ann-empty__media" aria-hidden="true">
+            <span class="pc__glyph"><Icon name="megaphone" /></span>
+          </div>
+          <div class="ann-empty__body">
+            <div class="ann-empty__copy">
+              <p class="ann-empty__title">{L.none}</p>
+              <p class="ann-empty__text">{L.noneText}</p>
+            </div>
+            <a class="btn btn--primary" href="#procedure">{L.see}</a>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* TATA CARA — three topics as the homepage "Bisnis Kami" card (white card, grey media panel,
+     blue tag); each topic lists its files as grey tiles that turn blue on hover, like the GCG tiles */
+  .proc-sec :global(.sec-head) { margin-bottom: clamp(40px, 4.5vw, 64px); }
+  .pc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.4vw, 20px); }
+  .pc__card {
+    display: flex; flex-direction: column; padding: 8px; border-radius: 20px; background: #fff;
+    box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.05), 0 1px 2px rgba(var(--ink-rgb), 0.04);
+  }
+  .pc__media { position: relative; display: grid; place-items: center; aspect-ratio: 5 / 2; border-radius: 14px; background: #f2f3f5; overflow: hidden; }
+  .pc__glyph {
+    display: grid; place-items: center; width: clamp(64px, 5.4vw, 80px); aspect-ratio: 1; border-radius: 18px; background: #fff; color: var(--blue);
+    box-shadow: 0 10px 24px -14px rgba(var(--ink-rgb), 0.3); transition: transform 0.6s var(--ease);
+  }
+  .pc__glyph :global(svg) { width: 44%; height: 44%; }
+  .pc__card:hover .pc__glyph { transform: scale(1.06); }
+  .pc__tag { position: absolute; top: 12px; right: 12px; padding: 7px 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 500; line-height: 1; }
+  .pc__body { display: flex; flex-direction: column; gap: 18px; flex: 1; padding: 20px 8px 4px; }
+  .pc__title { margin: 0 6px; font-family: var(--display); font-weight: 500; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.2; color: var(--ink); text-wrap: balance; }
+  .pc__files { list-style: none; margin: auto 0 0; padding: 0; display: grid; gap: 8px; }
+  .pc__file {
+    display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 16px; border-radius: 14px; background: #f2f3f5; color: var(--ink); text-decoration: none;
+    transition: background-color 0.35s, color 0.35s;
+  }
+  .pc__file-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+  .pc__file-name { font-size: 15px; font-weight: 500; line-height: 1.35; }
+  .pc__file-meta { font-size: 13px; line-height: 1.35; color: var(--fg-muted); overflow-wrap: anywhere; transition: color 0.35s; }
+  .pc__btn { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--blue); color: #fff; transition: background-color 0.35s, color 0.35s; }
+  .pc__btn :global(svg) { width: 17px; height: 17px; transition: transform 0.45s var(--ease); }
+  .pc__file:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) {
+    .pc__file:hover { background: var(--blue); color: #fff; }
+    .pc__file:hover .pc__file-meta { color: rgba(255, 255, 255, 0.8); }
+    .pc__file:hover .pc__btn { background: #fff; color: var(--blue); }
+    .pc__file[href$='.pdf']:hover .pc__btn :global(svg) { transform: translateY(2px); }
+    .pc__file:not([href$='.pdf']):hover .pc__btn :global(svg) { transform: translate(2px, -2px); }
+  }
+
+  @media (max-width: 1000px) { .pc { grid-template-columns: minmax(0, 1fr); max-width: 560px; margin-inline: auto; } }
+  @media (max-width: 600px) {
+    .pc__media { aspect-ratio: 3 / 1; }
+    .pc__glyph { width: 56px; border-radius: 14px; }
+    .pc__body { gap: 14px; padding: 16px 4px 2px; }
+    .pc__title { font-size: 19px; }
+    .pc__file { padding: 10px 10px 10px 14px; gap: 10px; }
+    .pc__file-name { font-size: 14px; }
+    .pc__btn { width: 34px; height: 34px; }
+  }
+
+  /* PENGUMUMAN — the same white card; the icon panel lines up with the first Tata Cara column */
+  .proc-sec { padding-bottom: clamp(48px, 5vw, 80px); }
+  .ann-sec { padding-top: clamp(48px, 5vw, 80px); padding-bottom: clamp(96px, 10vw, 150px); }
+  .ann-sec :global(.sec-head) { margin-bottom: clamp(32px, 3.5vw, 48px); }
+  .ann-empty {
+    --g: clamp(14px, 1.4vw, 20px);
+    display: grid; grid-template-columns: calc((100% + 16px - 2 * var(--g)) / 3 - 16px) minmax(0, 1fr); column-gap: 24px; align-items: center;
+    padding: 8px; border-radius: 20px; background: #fff;
+    box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.05), 0 1px 2px rgba(var(--ink-rgb), 0.04);
+  }
+  /* first column = one Tata Cara column minus both cards' 8px insets, so the two panels line up */
+  .ann-empty__media { aspect-ratio: 5 / 2; }
+  .ann-empty__body { display: flex; align-items: center; justify-content: space-between; gap: clamp(24px, 3vw, 48px); padding: 20px clamp(20px, 2.4vw, 36px) 20px 0; }
+  .ann-empty__copy { display: grid; gap: 10px; }
+  .ann-empty__body .btn { flex: none; }
+  .ann-empty__title { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.2; color: var(--ink); }
+  .ann-empty__text { margin: 0; max-width: 60ch; font-size: 15px; line-height: 1.55; color: var(--fg-muted); text-wrap: pretty; }
+
+  .ann-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .ann-item {
+    display: flex; align-items: center; gap: clamp(14px, 2vw, 28px); padding: 14px 14px 14px clamp(18px, 2vw, 24px);
+    border-radius: 14px; background: #f2f3f5; color: var(--ink); text-decoration: none; transition: background-color 0.35s, color 0.35s;
+  }
+  .ann-item__date { flex: none; min-width: 11ch; font-size: 13px; color: var(--fg-muted); font-variant-numeric: tabular-nums; transition: color 0.35s; }
+  .ann-item__title { flex: 1; min-width: 0; font-size: 16px; font-weight: 500; line-height: 1.4; }
+  .ann-item:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) {
+    .ann-item:hover { background: var(--blue); color: #fff; }
+    .ann-item:hover .ann-item__date { color: rgba(255, 255, 255, 0.8); }
+    .ann-item:hover .pc__btn { background: #fff; color: var(--blue); }
+    .ann-item:hover .pc__btn :global(svg) { transform: translate(2px, -2px); }
+  }
+
+  @media (max-width: 1000px) {
+    .ann-empty { grid-template-columns: minmax(0, 1fr); max-width: 560px; margin-inline: auto; }
+    .ann-empty__body { flex-direction: column; align-items: flex-start; gap: 18px; padding: 20px 12px 12px; }
+  }
+  @media (max-width: 600px) {
+    .ann-empty__media { aspect-ratio: 3 / 1; }
+    .ann-empty__title { font-size: 19px; }
+    .ann-item { flex-wrap: wrap; row-gap: 4px; }
+    .ann-item__date { flex-basis: 100%; }
+    .ann-item__title { font-size: 15px; }
+  }
+</style>

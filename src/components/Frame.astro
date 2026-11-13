@@ -1,0 +1,38 @@
+---
+import Notch from './Notch.astro';
+interface Props {
+  src?: string | null;
+  alt?: string;
+  ratio?: string;
+  class?: string;
+  eager?: boolean;
+  reveal?: boolean;
+  parallax?: number;
+  large?: boolean;
+  notch?: 'top' | 'left' | 'right' | 'bottom';
+  notchColor?: string;
+  style?: string;
+}
+const { src, alt = '', ratio, class: cls, eager = false, reveal = true, parallax, large = false, notch, notchColor = '#fff', style } = Astro.props;
+const styles = [ratio ? `aspect-ratio:${ratio}` : '', style ?? ''].filter(Boolean).join(';');
+const notchMap = {
+  top: { dir: 'down', style: 'top:0;right:10%;width:36%' },
+  bottom: { dir: 'up', style: 'bottom:0;left:10%;width:36%' },
+  left: { dir: 'right', style: 'left:0;top:24%;height:42%' },
+  right: { dir: 'left', style: 'right:0;top:24%;height:42%' },
+} as const;
+import { langOf } from '../i18n';
+---
+<div class:list={['media', large && 'media--lg', cls]} style={styles || undefined} data-reveal={reveal && src ? 'img' : undefined}>
+  {src ? (
+    parallax ? (
+      <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" data-parallax={parallax} />
+    ) : (
+      <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+    )
+  ) : (
+    <div class="ph" role="img" aria-label={langOf(Astro.params) === 'en' ? 'Image not available' : 'Gambar tidak tersedia'}><img src="/media/brand/home-logo.png" alt="" /></div>
+  )}
+  {notch && <Notch dir={notchMap[notch].dir} color={notchColor} depth={30} style={notchMap[notch].style} />}
+  <slot />
+</div>

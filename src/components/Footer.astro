@@ -1,0 +1,81 @@
+---
+import Icon from './Icon.astro';
+import Notch from './Notch.astro';
+import { langOf } from '../i18n';
+import { content } from '../i18n/content';
+import { ui } from '../i18n/ui';
+interface Props { hideCta?: boolean }
+const { hideCta = false } = Astro.props;
+const lang = langOf(Astro.params);
+const t = ui[lang];
+const { company, contactCta, nav, socials } = content(lang);
+const year = new Date().getFullYear();
+const colA = nav.slice(0, 4);
+const colB = nav.slice(4);
+---
+<footer class="site-footer theme-dark">
+  {!hideCta && (
+    <>
+      <!-- white tab hanging into the footer, same size as the notch under the homepage hero -->
+      <Notch dir="down" color="#fff" depth={40} class="footer-tab" />
+      <!-- background: faint grid with crosshairs + light streaks running along the lines (JS: initFooterGrid) -->
+      <div class="footer-grid" data-footer-grid aria-hidden="true"></div>
+    </>
+  )}
+
+  {!hideCta && (
+    <section class="cta-close" aria-labelledby="cta-title">
+      <div class="wrap cta-close__inner">
+        <p class="t-eyebrow">{contactCta.eyebrow}</p>
+        <h2 id="cta-title" class="t-xl cta-close__title" data-reveal="fade">{contactCta.title}</h2>
+        <p class="t-body cta-close__text" data-reveal="fade">{contactCta.text}</p>
+        <a class="btn btn--secondary btn--lg" href="/contact">{contactCta.button}</a>
+      </div>
+    </section>
+  )}
+
+  <div class="wrap footer-wrap">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a href="/" aria-label={`${company.brand} — ${t.home}`}><img class="logo" src="/media/brand/home-logo-light.png" alt={company.brand} width="166" height="33" /></a>
+        <div class="footer-affil">
+          <figure>
+            <figcaption>{t.memberOf}</figcaption>
+            <span class="affil-logo"><img src="/media/brand/logo-pertamina.png" alt="Pertamina" width="108" height="112" loading="lazy" /></span>
+          </figure>
+          <figure>
+            <figcaption>{t.subsidiaryOf}</figcaption>
+            <span class="affil-logo"><img src="/media/brand/logo-pertamina-gas-negara.png" alt="Pertamina Gas Negara" width="1200" height="353" loading="lazy" /></span>
+          </figure>
+        </div>
+      </div>
+      <nav class="footer-col" aria-labelledby="f-company">
+        <h2 id="f-company" class="footer-label">{t.fCompany}</h2>
+        <ul>{colA.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <nav class="footer-col" aria-labelledby="f-info">
+        <h2 id="f-info" class="footer-label">{t.fInfo}</h2>
+        <ul>{colB.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <div class="footer-col footer-reach">
+        <h2 class="footer-label">{t.fContact}</h2>
+        <address>
+          <p class="footer-org">PT. PGAS SOLUTION</p>
+          <p class="footer-muted">{company.address[0]}<br />{company.address[1]}</p>
+          <dl class="footer-dl">
+            <div><dt>{t.phone}</dt><dd><a href={`tel:${company.phone.replace(/\s/g, '')}`}>{company.phone}</a></dd></div>
+            <div><dt>{t.fax}</dt><dd>{company.fax}</dd></div>
+            <div><dt>{t.email}</dt><dd><a href={`mailto:${company.email}`}>{company.email}</a></dd></div>
+          </dl>
+        </address>
+        <div class="footer-socials" aria-label={t.socials}>
+          {socials.map((s) => <a href={s.href} target="_blank" rel="noopener" aria-label={s.label}><Icon name={s.icon} /></a>)}
+        </div>
+      </div>
+    </div>
+    <div class="footer-base">
+      <span>© {year} {company.name}. {t.rights}</span>
+      <span>{company.brand} — {company.tagline}</span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,142 @@
+---
+import { langOf, langPaths } from '../../../i18n';
+import { content } from '../../../i18n/content';
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import SectionHead from '../../../components/SectionHead.astro';
+import { articlesBy, articleUrl, categoryLabel, formatDate, galleryIn, hasEnglish } from '../../../lib/content';
+
+const lang = langOf(Astro.params);
+const ap = content(lang).articlesPage;
+const L = {
+  id: { eyebrow: 'Artikel', heroAlt: 'Tiga teknisi PGN Solution berhelm meninjau catatan di papan klip di fasilitas pipa gas saat senja', tabs: 'Kategori artikel', read: 'Baca', more: 'Tampilkan lebih banyak', photos: 'foto', view: 'Lihat foto' },
+  en: { eyebrow: 'Articles', heroAlt: 'Three PGN Solution technicians in helmets reviewing notes on a clipboard at a gas pipeline facility at dusk', tabs: 'Article categories', read: 'Read', more: 'Show more', photos: 'photos', view: 'View photos' },
+}[lang];
+const gallery = galleryIn(lang);
+
+// One section, three tabs. Press releases and news use the homepage feed card; a tab shows
+// STEP cards and "Tampilkan lebih banyak" reveals the next STEP. Albums open in the lightbox.
+const STEP = 9;
+const albums = gallery.filter((g) => g.images.length);
+const tabs = [
+  { id: 'press-release', label: categoryLabel('press-release', lang), items: articlesBy('press-release', lang) },
+  { id: 'news', label: categoryLabel('news', lang), items: articlesBy('news', lang) },
+] as const;
+export const getStaticPaths = langPaths;
+---
+<Base title={L.eyebrow} description={ap.hero.text} image="/media/hero/article.jpg">
+  <PageHero eyebrow={L.eyebrow} title={ap.hero.title} text={ap.hero.text} image="/media/hero/article.webp" imageSrcset="/media/hero/article.webp 1774w, /media/hero/article@2x.webp 3548w" imageAlt={L.heroAlt} crumbs={[{ label: L.eyebrow }]} />
+
+  <section id="articles" class="section art-sec" aria-labelledby="art-title" data-tabs data-tab-hash>
+    <div class="wrap">
+      <SectionHead title={ap.social.title} id="art-title" size="lg" />
+      <div class="art-tabs">
+        <div class="seg-tabs" role="tablist" aria-label={L.tabs}>
+          {[...tabs.map((t) => ({ id: t.id, label: t.label, n: t.items.length })), { id: 'gallery', label: ap.galleryTitle, n: albums.length }].map((t, i) => (
+            <button type="button" role="tab" class="seg-tab" id={`${t.id}-tab`} aria-controls={t.id} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-tab={i}>
+              {t.label}<span class="seg-tab__count">{t.n}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tabs.map((t, ti) => (
+        <div id={t.id} class="art-panel" role="tabpanel" aria-labelledby={`${t.id}-tab`} data-tab-panel hidden={ti !== 0}>
+          <ul class="art-grid" role="list" id={`${t.id}-list`}>
+            {t.items.map((a, i) => (
+              <li class="art-card theme-dark" hidden={i >= STEP} data-load-item>
+                {a.image && <img class="art-card__bg" src={a.image} alt="" loading="lazy" decoding="async" />}
+                <span class="art-card__badge">{t.label}</span>
+                <div class="art-card__body">
+                  <h3 class="art-card__title" lang={lang === 'en' && !hasEnglish(a) ? 'id' : undefined}>{a.title}</h3>
+                  <p class="art-card__excerpt" lang={lang === 'en' && !hasEnglish(a) ? 'id' : undefined}>{a.excerpt}</p>
+                  <div class="art-card__foot">
+                    <time class="art-card__date" datetime={a.isoDate}>{formatDate(a.isoDate, lang)}</time>
+                    <a class="btn btn--secondary art-card__btn" href={articleUrl(a)}>{L.read}<span class="visually-hidden"> {a.title}</span></a>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {t.items.length > STEP && (
+            <div class="art-more" data-load-wrap>
+              <button type="button" class="btn btn--soft" aria-controls={`${t.id}-list`} data-load-more={STEP}>
+                {L.more}<span class="art-more__n" data-load-left>{t.items.length - STEP}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div id="gallery" class="art-panel" role="tabpanel" aria-labelledby="gallery-tab" data-tab-panel hidden>
+        <ul class="art-grid" role="list">
+          {albums.map((g) => (
+            <li class="art-card art-card--album theme-dark">
+              <img class="art-card__bg" src={g.images[0]} alt="" loading="lazy" decoding="async" />
+              <span class="art-card__badge">{g.images.length} {L.photos}</span>
+              <div class="art-card__body">
+                <h3 class="art-card__title">{g.title}</h3>
+                <div class="art-card__foot">
+                  <span></span>
+                  <button type="button" class="btn btn--secondary art-card__btn" data-album={g.title} data-album-group={ap.galleryTitle} data-album-images={JSON.stringify(g.images)}>{L.view}<span class="visually-hidden"> {g.title}</span></button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .art-sec { padding-bottom: clamp(96px, 10vw, 150px); }
+  .art-sec :global(.sec-head) { margin-bottom: clamp(24px, 2.6vw, 36px); }
+  .art-tabs { display: flex; justify-content: center; margin-bottom: clamp(32px, 3.5vw, 48px); }
+  .art-tabs .seg-tab { white-space: nowrap; }
+  /* phones: tabs size to their labels so "Press Release" stays on one line */
+  @media (max-width: 700px) { .art-tabs .seg-tab { flex: 1 1 auto; justify-content: center; gap: 6px; padding-inline: 10px; } }
+  @media (max-width: 380px) { .art-tabs .seg-tab { font-size: 14px; padding-inline: 8px; } }
+  .art-panel[hidden] { display: none; }
+
+  /* the homepage feed card ("Press Release & Berita"): full-bleed photo, white badge, text bottom-left */
+  .art-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.4vw, 20px); }
+  .art-card {
+    position: relative; display: flex; flex-direction: column; justify-content: flex-end; height: clamp(380px, 30vw, 460px);
+    padding: clamp(20px, 2vw, 28px); border-radius: var(--radius-card); overflow: hidden; isolation: isolate; background: var(--ink);
+  }
+  .art-card[hidden] { display: none; }
+  .art-card:nth-child(even) { background: var(--ink-2); }
+  .art-card__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: transform 1.2s var(--ease); }
+  .art-card:hover .art-card__bg { transform: scale(1.04); }
+  .art-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0.12) 50%, rgba(3, 20, 30, 0.82) 100%); }
+  .art-card__badge {
+    position: absolute; top: clamp(16px, 1.6vw, 22px); left: clamp(20px, 2vw, 28px);
+    padding: 8px 14px; border-radius: 8px; background: #fff; color: var(--ink);
+    font-size: 13px; font-weight: 500; line-height: 1; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  }
+  .art-card__body { display: grid; gap: 10px; min-width: 0; }
+  .art-card__title {
+    margin: 0; color: #fff; font-family: var(--display); font-weight: 500; letter-spacing: 0; line-height: 1.25; font-size: clamp(19px, 1.45vw, 22px);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .art-card__excerpt {
+    margin: 0; color: rgba(255, 255, 255, 0.8); font-size: 14px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .art-card__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 6px; }
+  .art-card__date { font-size: 13px; color: rgba(255, 255, 255, 0.75); }
+  .art-card__btn { flex: none; min-width: 120px; }
+  /* the whole card is the hit area */
+  .art-card__btn::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+
+  .art-more[hidden] { display: none; }
+  .art-more { display: flex; justify-content: center; margin-top: clamp(32px, 3.5vw, 48px); }
+  .art-more__n { margin-left: 10px; opacity: 0.6; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 1000px) { .art-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) {
+    .art-grid { grid-template-columns: minmax(0, 1fr); }
+    .art-card { height: 380px; }
+  }
+</style>

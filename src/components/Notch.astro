@@ -1,0 +1,27 @@
+---
+/**
+ * Reference "notch" tab: a trapezoid with soft bevels, attached to one edge.
+ * dir = direction the tab protrudes. Use the page/section background colour to
+ * cut a notch into media, or the section colour to extend a section edge.
+ */
+interface Props { dir?: 'down' | 'up' | 'left' | 'right'; color?: string; depth?: number; class?: string; style?: string }
+const { dir = 'down', color = '#fff', depth = 36, class: cls, style = '' } = Astro.props;
+const vertical = dir === 'left' || dir === 'right';
+const H = 'M0 0H56V36H50C45 36 42 34.2 39.4 31L17.6 5C15 1.8 12 0 7 0Z';
+const V = 'M0 0V56H36V50C36 45 34.2 42 31 39.4L5 17.6C1.8 15 0 12 0 7Z';
+---
+<div class:list={['notch', `notch--${dir}`, cls]} style={`--notch:${color};--notch-d:${depth}px;${style}`} aria-hidden="true">
+  {vertical ? (
+    <>
+      <svg viewBox="0 0 36 56" preserveAspectRatio="none"><path d={V} /></svg>
+      <span class="notch__mid"></span>
+      <svg viewBox="0 0 36 56" preserveAspectRatio="none" style="transform:scaleY(-1)"><path d={V} /></svg>
+    </>
+  ) : (
+    <>
+      <svg viewBox="0 0 56 36" preserveAspectRatio="none"><path d={H} /></svg>
+      <span class="notch__mid"></span>
+      <svg viewBox="0 0 56 36" preserveAspectRatio="none" style="transform:scaleX(-1)"><path d={H} /></svg>
+    </>
+  )}
+</div>

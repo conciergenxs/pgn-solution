@@ -1,0 +1,25 @@
+---
+import Frame from './Frame.astro';
+import Icon from './Icon.astro';
+import { articleUrl, categoryLabel, formatDate, hasEnglish, localize, type Article } from '../lib/content';
+import { langOf } from '../i18n';
+interface Props { article: Article; layout?: 'stack' | 'row'; headingLevel?: 'h2' | 'h3'; showCategory?: boolean; showExcerpt?: boolean; ratio?: string }
+const { article: raw, layout = 'stack', headingLevel = 'h3', showCategory = true, showExcerpt = true, ratio } = Astro.props;
+const H = headingLevel;
+const lang = langOf(Astro.params);
+const a = localize(raw, lang);
+// an article only published in Indonesian keeps its language for screen readers
+const textLang = lang === 'en' && !hasEnglish(a) ? 'id' : undefined;
+---
+<article class:list={['a-card', layout === 'row' && 'a-card--row']}>
+  <div class="a-card__media">
+    <Frame src={a.image} alt="" ratio={ratio ?? (layout === 'row' ? '4/3' : '3/2')} />
+    {showCategory && <span class="a-card__badge">{categoryLabel(a.category, lang)}</span>}
+  </div>
+  <div class="a-card__body">
+    <time class="a-card__date" datetime={a.isoDate}>{formatDate(a.isoDate, lang)}</time>
+    <H class="a-card__title" lang={textLang}><a href={articleUrl(a)}>{a.title}</a></H>
+    {showExcerpt && <p class="a-card__excerpt" lang={textLang}>{a.excerpt}</p>}
+  </div>
+  <span class="a-card__more" aria-hidden="true">{lang === 'en' ? 'Read' : 'Baca'}<Icon name="arrow" /></span>
+</article>

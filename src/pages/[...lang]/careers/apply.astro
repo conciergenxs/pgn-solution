@@ -1,0 +1,50 @@
+---
+import { langOf, langPaths } from '../../../i18n';
+import { content } from '../../../i18n/content';
+import Base from '../../../layouts/Base.astro';
+import ApplyForm from '../../../components/ApplyForm.astro';
+const lang = langOf(Astro.params);
+const { careers: c, jobs, company } = content(lang);
+const L = {
+  id: { title: 'Lamar', desc: 'Formulir lamaran kerja PT PGAS Solution.', eyebrow: 'Karir', s1: 'Isi data diri dan pendidikan terakhir.', s2: 'Tulis posisi yang diinginkan', s2b: ' atau pilih dari daftar lowongan', s3: 'Unggah Resume/CV dalam format PDF.', seeVac: 'Lihat Lowongan', form: 'Formulir Lamaran' },
+  en: { title: 'Apply', desc: 'PT PGAS Solution job application form.', eyebrow: 'Careers', s1: 'Fill in your personal details and last education.', s2: 'Write the position you want', s2b: ' or choose one from the vacancies', s3: 'Upload your Resume/CV in PDF format.', seeVac: 'See Vacancies', form: 'Application Form' },
+}[lang];
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={`${L.desc} ${c.vacancy.text}`}>
+  <section class="phero gridbg">
+    <div class="wrap phero__inner">
+      <p class="t-eyebrow hero-fade">{L.eyebrow}</p>
+      <h1 class="t-xl" aria-label="Apply"><span class="line-mask" aria-hidden="true"><span>Apply</span></span></h1>
+      <p class="t-body hero-fade">{c.vacancy.text}</p>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="ap">
+        <aside class="ap__side">
+          <h2 class="t-lg">{c.workWith.title}</h2>
+          <ol class="rows rows--top" role="list">
+            <li><span class="t-index">01</span><span>{L.s1}</span></li>
+            <li><span class="t-index">02</span><span>{L.s2}{jobs.length ? L.s2b : ''}.</span></li>
+            <li><span class="t-index">03</span><span>{L.s3}</span></li>
+          </ol>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <a class="btn btn--soft" href="/careers/opportunities">{L.seeVac}</a>
+            <a class="btn btn--soft" href={`mailto:${company.email}`}>{company.email}</a>
+          </div>
+        </aside>
+        <div class="ap__form theme-dark">
+          <p class="t-mono">{L.form}</p>
+          <ApplyForm />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .ap { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(32px, 5vw, 96px); align-items: start; }
+  .ap__side { position: sticky; top: calc(var(--header-top) + var(--header-h) + 32px); display: grid; gap: 28px; }
+  .ap__form { border-radius: var(--radius-card); padding: clamp(28px, 4vw, 64px); display: grid; gap: 32px; }
+  @media (max-width: 1000px) { .ap { grid-template-columns: 1fr; } .ap__side { position: static; } }
+</style>

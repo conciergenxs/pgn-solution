@@ -1,0 +1,29 @@
+---
+import { LANGS, langParam, type Lang } from '../../../../i18n';
+import Base from '../../../../layouts/Base.astro';
+import ApplyForm from '../../../../components/ApplyForm.astro';
+import { jobs, type Job } from '../../../../data/pages';
+export function getStaticPaths() {
+  // each path once per locale
+  const paths = (lang: Lang) => {
+    return jobs.map((job) => ({ params: { slug: job.slug }, props: { job } }));
+  };
+  return LANGS.flatMap((lang) => paths(lang).map((p) => ({ ...p, params: { ...p.params, lang: langParam(lang) } })));
+}
+const { job } = Astro.props as { job: Job };
+const en = Astro.params.lang === 'en';
+---
+<Base title={job.title} description={`${en ? 'Vacancy' : 'Lowongan'} ${job.title} — PT PGAS Solution`}>
+  <section class="phero gridbg">
+    <div class="wrap phero__inner">
+      <p class="t-eyebrow">{job.status}{job.location ? ` · ${job.location}` : ''}</p>
+      <h1 class="t-xl">{job.title}</h1>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0">
+    <div class="wrap split">
+      <div class="prose" set:html={job.description} />
+      <div class="card"><h2 class="t-md">{en ? 'Apply for this position' : 'Lamar posisi ini'}</h2><ApplyForm position={job.title} /></div>
+    </div>
+  </section>
+</Base>

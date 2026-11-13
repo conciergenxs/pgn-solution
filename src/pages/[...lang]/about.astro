@@ -1,0 +1,314 @@
+---
+import { langOf, langPaths } from '../../i18n';
+import { content } from '../../i18n/content';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import SubNav from '../../components/SubNav.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import Icon from '../../components/Icon.astro';
+import Notch from '../../components/Notch.astro';
+import YearAccordion from '../../components/YearAccordion.astro';
+import LogoCarousel from '../../components/LogoCarousel.astro';
+import { awardsIn, boardIn, certificationsIn } from '../../lib/content';
+
+const lang = langOf(Astro.params);
+const { aboutHero, vision, mission, culture, history, leadership, recognitionIntro } = content(lang);
+const board = boardIn(lang);
+const awards = awardsIn(lang);
+const certifications = certificationsIn(lang);
+const L = {
+  id: {
+    title: 'Tentang Kami', heroLines: ['Setiap usaha', 'untuk keunggulan'], heroAlt: 'Foto udara stasiun pipa gas di tepi sungai saat matahari terbenam',
+    sub: ['Visi & Misi', 'Budaya Kami', 'Sejarah', 'BOD & BOC', 'Penghargaan'], vision: 'Visi', mission: 'Misi',
+    prevValue: 'Nilai sebelumnya', nextValue: 'Nilai berikutnya', historyLabel: 'Sejarah per tahun', events: 'peristiwa',
+    boc: 'Board of Commisioner', bod: 'Board of Director', prevMember: 'Anggota sebelumnya', nextMember: 'Anggota berikutnya', profile: 'Lihat profil', profileOf: 'Profil', close: 'Tutup',
+    cert2: 'Penghargaan Program P2 HIV & AIDS di Tempat Kerja', awards: 'Penghargaan', certs: 'Sertifikasi', filter: 'Saring dokumen', stripLabel: 'Penghargaan dan sertifikasi', stripGroup: 'Penghargaan & Sertifikasi',
+  },
+  en: {
+    title: 'About Us', heroLines: ['Every effort', 'for excellence'], heroAlt: 'Aerial photo of a riverside gas pipeline station at sunset',
+    sub: ['Vision & Mission', 'Our Culture', 'History', 'BOD & BOC', 'Awards'], vision: 'Vision', mission: 'Mission',
+    prevValue: 'Previous value', nextValue: 'Next value', historyLabel: 'History by year', events: 'events',
+    boc: 'Board of Commissioners', bod: 'Board of Directors', prevMember: 'Previous member', nextMember: 'Next member', profile: 'View profile', profileOf: 'Profile of', close: 'Close',
+    cert2: 'Award for the HIV & AIDS Prevention Programme in the Workplace', awards: 'Awards', certs: 'Certifications', filter: 'Filter documents', stripLabel: 'Awards and certifications', stripGroup: 'Awards & Certifications',
+  },
+}[lang];
+
+// Card photos for the six culture values (supplied per value in public/media/about), named after the
+// Indonesian value names, so they are picked by position.
+const valuePhoto = (i: number) => `/media/about/culture-${content('id').culture.values[i].name.toLowerCase()}.webp`;
+const sub = ['#vision-mission', '#our-culture', '#company-history', '#bod-boc', '#awards-certification'].map((href, i) => ({ label: L.sub[i], href }));
+const groups = [
+  { title: L.boc, members: board.commissioners, key: 'boc' },
+  { title: L.bod, members: board.directors, key: 'bod' },
+];
+// one row: commissioners first, then directors (same order as before); each card carries its board badge
+const members = groups.flatMap((g) => g.members.map((m, i) => ({ ...m, key: g.key, groupTitle: g.title, id: `${g.key}-${i}` })));
+// One entry's label in the source data is a file name ("certification-2"); its title is
+// transcribed from the certificate itself. That image is also tiny (222×158), so it is shown small.
+const displayTitle = (label: string) => (label === 'certification-2' ? L.cert2 : label);
+const docs = [
+  ...awards.map((a) => ({ ...a, cat: 'awards' })),
+  ...certifications.map((a) => ({ ...a, cat: 'certs' })),
+].map((a) => ({ ...a, title: displayTitle(a.label) }));
+const filters = [
+  { id: 'awards', label: L.awards, count: awards.length },
+  { id: 'certs', label: L.certs, count: certifications.length },
+];
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={aboutHero.text} image="/media/about/hero.jpg">
+  <PageHero eyebrow={L.title} title={aboutHero.title} text={aboutHero.text} image="/media/about/hero.webp" imageSrcset="/media/about/hero.webp 1672w, /media/about/hero@2x.webp 3344w" imageAlt={L.heroAlt} crumbs={[{ label: L.title }]} lines={L.heroLines} />
+  <SubNav items={sub} />
+
+  <!-- VISION & MISSION -->
+  <section id="vision-mission" class="section" aria-labelledby="vision-title">
+    <div class="wrap">
+      <SectionHead eyebrow={L.vision} title={vision} id="vision-title" maxw="20ch" />
+      <div class="split section-gap">
+        <div class="split__head">
+          <p class="t-eyebrow" data-sweep>{L.mission}</p>
+          <h3 class="t-lg" data-sweep>{mission.title}</h3>
+        </div>
+        <ol class="rows mission-list" role="list">
+          {mission.items.map((m, i) => <li data-reveal="fade"><span class="t-index">{String(i + 1).padStart(2, '0')}</span><span class="t-sm" data-sweep>{m}</span></li>)}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- CULTURE: one portrait photo card per value (number + name top, description bottom), scrollable -->
+  <section id="our-culture" class="section culture" aria-labelledby="culture-title" data-scroller>
+    <div class="wrap">
+      <div class="culture__head">
+        <div class="culture__intro" data-reveal="fade">
+          <p class="t-eyebrow">{culture.eyebrow}</p>
+          <h2 id="culture-title" class="t-lg culture__title">{culture.title}</h2>
+          <p class="t-body culture__desc">{culture.text}</p>
+        </div>
+        <div class="culture__nav">
+          <button type="button" class="chev-btn chev-btn--prev" data-scroller-prev aria-label={L.prevValue}><Icon name="chev" /></button>
+          <button type="button" class="chev-btn chev-btn--next" data-scroller-next aria-label={L.nextValue}><Icon name="chev" /></button>
+        </div>
+      </div>
+    </div>
+    <ol class="culture__track" role="list" data-scroller-track>
+      {culture.values.map((v, i) => (
+        <li class="val">
+          <img class="val__bg" src={valuePhoto(i)} alt="" loading="lazy" decoding="async" />
+          <div class="val__top">
+            <span class="val__num" aria-hidden="true"><span class="val__no">No</span>{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="val__name">{v.name}</h3>
+          </div>
+          <p class="val__text">{v.text}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <!-- HISTORY: horizontal year accordion — every year is a slim column; the active one widens to show its events -->
+  <section id="company-history" class="section history" aria-labelledby="history-title">
+    <div class="wrap">
+      <div class="history__head">
+        <div class="history__intro" data-reveal="fade">
+          <p class="t-eyebrow">{history.eyebrow}</p>
+          <h2 id="history-title" class="t-lg history__title">{history.title}</h2>
+          <p class="t-body history__desc">{history.summary}</p>
+        </div>
+      </div>
+
+      <YearAccordion years={history.timeline} label={L.historyLabel} unit={L.events} />
+    </div>
+  </section>
+
+  <!-- BOARD — one row of portrait cards (BOC + BOD) beside the intro, on a light grey band
+       with a rounded notch cut into the middle of its top and bottom edges -->
+  <section id="bod-boc" class="section board-sec" aria-labelledby="board-title" data-scroller>
+    <Notch dir="down" color="#fff" depth={32} class="board-sec__tab board-sec__tab--top" />
+    <Notch dir="up" color="#fff" depth={32} class="board-sec__tab board-sec__tab--bottom" />
+    <div class="board-sec__grid">
+      <div class="board-sec__intro" data-reveal="fade">
+        <div class="board-sec__copy">
+          <p class="t-eyebrow">{leadership.eyebrow}</p>
+          <h2 id="board-title" class="t-md board-sec__title">{leadership.title}</h2>
+          <p class="t-body board-sec__desc">{leadership.text}</p>
+        </div>
+        <div class="board-sec__nav">
+          <button type="button" class="chev-btn chev-btn--prev" data-scroller-prev aria-label={L.prevMember}><Icon name="chev" /></button>
+          <button type="button" class="chev-btn chev-btn--next" data-scroller-next aria-label={L.nextMember}><Icon name="chev" /></button>
+        </div>
+      </div>
+      <ul class="mem-track" role="list" data-scroller-track>
+        {members.map((m) => (
+          <li class="mem">
+            <button type="button" class="mem__btn" data-dialog-open={m.id}>
+              <img class="mem__photo" src={m.image} alt="" width="102" height="138" loading="lazy" />
+              <span class="mem__badge" title={m.groupTitle}>{m.key.toUpperCase()}</span>
+              <span class="mem__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+              <span class="mem__text">
+                <span class="mem__role">{m.role}</span>
+                <span class="mem__name">{m.name}</span>
+              </span>
+              <span class="visually-hidden">, {m.groupTitle}. {L.profile}</span>
+            </button>
+            <dialog id={m.id} data-dialog aria-label={`${L.profileOf} ${m.name}`}>
+              <div class="dlg">
+                <button class="dlg__close" type="button" data-dialog-close aria-label={L.close}><Icon name="close" /></button>
+                <div class="bio">
+                  <div class="bio__head">
+                    <img src={m.image} alt={m.name} width="102" height="138" />
+                    <div>
+                      <p class="t-mono">{m.groupTitle}</p>
+                      <h4 class="t-lg" style="margin-top:14px">{m.name}</h4>
+                      <p class="t-body" style="margin-top:8px">{m.role}</p>
+                    </div>
+                  </div>
+                  <div class="prose bio__body" set:html={m.bio} />
+                </div>
+              </div>
+            </dialog>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- AWARDS & CERTIFICATION — same grid as the homepage "Klien Kami" strip (LogoCarousel, docs mode):
+       crosshair cells, fading grid lines, blue cursor glow, wave paging; filter chips beside the head -->
+  <section id="awards-certification" class="section aw" aria-labelledby="awards-title">
+    <div class="wrap">
+      <div class="aw__head">
+        <div class="aw__intro" data-reveal="fade">
+          <p class="t-eyebrow">{recognitionIntro.eyebrow}</p>
+          <h2 id="awards-title" class="t-lg aw__title">{recognitionIntro.title}</h2>
+          <p class="t-body aw__desc">{recognitionIntro.text}</p>
+        </div>
+        <div class="aw__filters" role="group" aria-label={L.filter}>
+          {filters.map((f, fi) => (
+            <button type="button" class="aw__filter" aria-pressed={fi === 0 ? 'true' : 'false'} data-lc-filter={f.id}>{f.label}<span class="aw__count">{f.count}</span></button>
+          ))}
+        </div>
+      </div>
+      <div class="aw__strip">
+        <LogoCarousel docs={docs.map((d) => ({ src: d.image, caption: d.title, cat: d.cat }))} initialCat="awards" label={L.stripLabel} group={L.stripGroup} />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* culture value cards */
+  /* head: left-aligned one-line headline + two-line description, chevrons bottom-right */
+  .culture__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px 40px; margin-bottom: clamp(32px, 3.5vw, 48px); }
+  .culture__intro { display: grid; gap: clamp(14px, 1.4vw, 20px); justify-items: start; min-width: 0; }
+  .culture__title { margin: 0; white-space: nowrap; }
+  .culture__desc { margin: 0; max-width: 58ch; }
+  .culture__nav { display: flex; gap: 10px; flex: none; }
+  @media (max-width: 760px) { .culture__head { flex-direction: column; align-items: flex-start; } .culture__title { white-space: normal; } .culture__nav { align-self: flex-end; } }
+  .culture__track { list-style: none; margin: 0; display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 0 var(--pad-x); scroll-padding-inline: var(--pad-x); }
+  .culture__track::-webkit-scrollbar { display: none; }
+  .val {
+    position: relative; flex: none; width: clamp(260px, 22.5vw, 340px); aspect-ratio: 306 / 420; border-radius: 18px; overflow: hidden;
+    scroll-snap-align: start; isolation: isolate; color: #fff; background: var(--ink);
+    display: flex; flex-direction: column; justify-content: space-between; padding: clamp(20px, 1.8vw, 26px);
+  }
+  .val__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: transform 1.1s var(--ease); }
+  .val:hover .val__bg { transform: scale(1.04); }
+  /* darken top (number + name) and bottom (description) so the white text always reads */
+  .val::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 32%, rgba(0, 0, 0, 0.12) 58%, rgba(0, 0, 0, 0.7) 100%); }
+  .val__top { display: flex; align-items: flex-start; gap: 18px; }
+  .val__num { flex: none; font-family: var(--display); font-weight: 500; font-size: clamp(38px, 3.2vw, 50px); line-height: 0.9; letter-spacing: 0; }
+  .val__num { display: inline-flex; align-items: flex-start; }
+  .val__no { font-size: 0.26em; font-weight: 500; line-height: 1; margin: 0.12em 6px 0 0; opacity: 0.9; }
+  .val__name { margin: 4px 0 0; font-family: var(--display); font-weight: 500; font-size: clamp(18px, 1.5vw, 22px); line-height: 1.2; letter-spacing: 0; color: #fff; }
+  .val__text { margin: 0; font-size: clamp(15px, 1.15vw, 17px); line-height: 1.45; color: rgba(255, 255, 255, 0.92); max-width: 28ch; }
+
+  /* HISTORY — left-aligned head; description clamped to 2 lines with a "read more" toggle */
+  .history__head { margin-bottom: clamp(32px, 3.5vw, 48px); }
+  /* centred head; the shortened description stays within two lines */
+  .history__intro { display: grid; gap: clamp(12px, 1.2vw, 18px); justify-items: center; text-align: center; }
+  .history__title { margin: 0; }
+  @media (min-width: 761px) { .history__title { white-space: nowrap; } }
+  .history__desc { margin: 0; max-width: 46em; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* phones can't fit it in two lines: show it whole rather than cut it off */
+  @media (max-width: 760px) { .history__desc { display: block; overflow: visible; } }
+
+  /* BOD & BOC — light grey band, notches in the middle of its top and bottom edges */
+  /* margins give the same white gap around the band as between two white sections; roomier padding inside */
+  .board-sec { background: #f2f3f5; overflow: hidden; margin-block: var(--sec-top) var(--sec-bottom); padding-block: clamp(112px, 10.5vw, 176px); }
+  .board-sec :global(.board-sec__tab) { left: 50%; width: min(640px, 56vw); transform: translateX(-50%); }
+  .board-sec :global(.board-sec__tab--top) { top: 0; }
+  .board-sec :global(.board-sec__tab--bottom) { bottom: 0; transform: translateX(-50%) scaleY(-1); }
+  /* intro aligned to the page grid; the card row runs off the right edge */
+  .board-sec__grid {
+    display: grid; grid-template-columns: clamp(280px, 27vw, 420px) minmax(0, 1fr); gap: clamp(32px, 4vw, 72px);
+    padding-left: max(var(--pad-x), calc((100% - var(--maxw)) / 2 + var(--pad-x)));
+  }
+  .board-sec__intro { display: flex; flex-direction: column; justify-content: space-between; gap: 32px; padding-top: 4px; }
+  .board-sec__copy { display: grid; gap: clamp(14px, 1.4vw, 20px); justify-items: start; }
+  .board-sec__title, .board-sec__desc { margin: 0; }
+  .board-sec__title { text-wrap: balance; }
+  .board-sec__nav { display: flex; gap: 10px; }
+  .mem-track { list-style: none; margin: 0; padding: 0 var(--pad-x) 0 0; display: flex; gap: clamp(14px, 1.4vw, 20px); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .mem-track::-webkit-scrollbar { display: none; }
+  .mem { flex: none; width: clamp(250px, 24vw, 360px); scroll-snap-align: start; }
+  .mem__btn {
+    position: relative; display: block; width: 100%; aspect-ratio: 102 / 138; padding: 0; border-radius: 18px; overflow: hidden;
+    isolation: isolate; background: var(--ink); color: #fff; text-align: left; cursor: pointer;
+  }
+  .mem__btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+  .mem__photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform 1.1s var(--ease); }
+  .mem__btn:hover .mem__photo { transform: scale(1.04); }
+  /* darken the bottom so role + name always read */
+  .mem__btn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(3, 34, 51, 0.25) 0%, rgba(3, 34, 51, 0) 22%, rgba(3, 34, 51, 0) 50%, rgba(3, 34, 51, 0.82) 100%); }
+  .mem__badge {
+    position: absolute; top: 16px; left: 16px; padding: 7px 10px; border-radius: 6px;
+    font-family: var(--sans); font-size: 13px; font-weight: 500; letter-spacing: 0.02em; line-height: 1;
+    background: rgba(22, 27, 36, 0.55); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  }
+  .mem__go {
+    position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 8px;
+    background: var(--blue); color: #fff; transition: background-color 0.3s;
+  }
+  .mem__go :global(svg) { width: 18px; height: 18px; }
+  .mem__btn:hover .mem__go { background: #2aa3df; }
+  .mem__text { position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: 6px; padding: clamp(18px, 1.6vw, 24px); }
+  .mem__role { font-family: var(--sans); font-size: clamp(14px, 1.05vw, 16px); letter-spacing: 0.02em; line-height: 1.4; color: rgba(255, 255, 255, 0.82); }
+  .mem__name { font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.6vw, 24px); line-height: 1.15; }
+  @media (max-width: 900px) {
+    .board-sec__grid { grid-template-columns: minmax(0, 1fr); padding-left: var(--pad-x); }
+    .board-sec__intro { flex-direction: row; flex-wrap: wrap; align-items: flex-end; padding-right: var(--pad-x); }
+    .board-sec__copy { flex: 1 1 320px; }
+  }
+  .bio { padding: clamp(28px, 4vw, 56px); }
+  .bio__head { display: flex; gap: 28px; align-items: end; padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+  .bio__head img { width: 102px; flex: none; border-radius: 10px; }
+  .bio__body { font-size: 16px; }
+
+  /* AWARDS & CERTIFICATION — head + filter chips; the strip is LogoCarousel (docs mode) */
+  .aw__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px 48px; margin-bottom: clamp(8px, 1vw, 16px); }
+  .aw__intro { display: grid; gap: clamp(14px, 1.4vw, 20px); justify-items: start; min-width: 0; }
+  .aw__title { margin: 0; max-width: 26ch; text-wrap: balance; }
+  .aw__desc { margin: 0; max-width: 58ch; }
+  .aw__filters { flex: none; display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #f2f3f5; }
+  .aw__filter {
+    display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: var(--radius-btn);
+    font-size: 15px; font-weight: 500; color: var(--ink); background: transparent; cursor: pointer; transition: background-color 0.25s, color 0.25s;
+  }
+  .aw__filter:hover { background: rgba(3, 34, 51, 0.05); }
+  .aw__filter[aria-pressed='true'] { background: var(--blue); color: #fff; }
+  .aw__filter:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .aw__count { font-size: 13px; opacity: 0.6; font-variant-numeric: tabular-nums; }
+  /* the grid lines fade out past the row on every side: keep them from widening the page */
+  .aw { overflow-x: clip; }
+  /* the grid's fading lines need air above and below, like on the homepage */
+  /* room for the lines that fade out above and below the row (same height as LogoCarousel's fades) */
+  .aw__strip { padding-block: max(min(11.979vw, 200px), 64px); }
+  @media (max-width: 760px) {
+    .aw__head { flex-direction: column; align-items: flex-start; }
+    .aw__filters { width: 100%; }
+    .aw__filter { flex: 1 1 auto; justify-content: center; gap: 6px; padding: 0 10px; font-size: 14px; }
+  }
+  /* mission list: no outer rules, blue numbers */
+  .mission-list > li:last-child { border-bottom: 0; }
+  .mission-list :global(.t-index) { color: var(--blue); }
+</style>

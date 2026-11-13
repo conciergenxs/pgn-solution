@@ -1,0 +1,33 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  text?: string;
+  image?: string;
+  /** optional responsive sources for the hero image, e.g. a 2x file for retina screens */
+  imageSrcset?: string;
+  imageAlt?: string;
+  /** kept for compatibility; breadcrumbs are no longer shown in page heroes */
+  crumbs?: { label: string; href?: string }[];
+  /** Optional explicit line breaks for the masked headline reveal */
+  lines?: string[];
+}
+const { eyebrow, title, text, image, imageSrcset, imageAlt = '', crumbs, lines } = Astro.props;
+const titleLines = lines ?? [title];
+---
+<section class="phero gridbg">
+  <div class="wrap phero__inner">
+    {eyebrow && <p class="t-eyebrow hero-fade">{eyebrow}</p>}
+    <h1 class="t-xl phero__title" aria-label={title}>
+      {titleLines.map((l) => <span class="line-mask" aria-hidden="true"><span>{l}</span></span>)}
+    </h1>
+    {text && <p class="t-body hero-fade">{text}</p>}
+    {Astro.slots.has('actions') && <div class="phero__actions hero-fade"><slot name="actions" /></div>}
+  </div>
+</section>
+<!-- full-bleed image; JS cuts a notch into its top and bottom edges as it scrolls through (initNotchBands) -->
+{image && (
+  <div class="pband hero-fade" data-notch-band>
+    <img src={image} srcset={imageSrcset} sizes={imageSrcset ? '100vw' : undefined} alt={imageAlt} fetchpriority="high" decoding="async" data-parallax="0.06" />
+  </div>
+)}

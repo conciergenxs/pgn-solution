@@ -1,0 +1,113 @@
+---
+import { langOf, langPaths } from '../../i18n';
+import { content } from '../../i18n/content';
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import SubNav from '../../components/SubNav.astro';
+import SectionHead from '../../components/SectionHead.astro';
+
+const lang = langOf(Astro.params);
+const { businessHero, lines, packages } = content(lang);
+const L = {
+  id: {
+    title: 'Bisnis', heroLines: ['Bekerja bersama,', 'percaya, dan', 'mengubah dunia'], heroAlt: 'Dua teknisi PGN Solution berhelm dan berseragam merah-biru di depan instalasi pipa gas saat senja',
+    detail: 'Lihat Detail', tukLead: 'Pelatihan dan sertifikasi kompetensi SDM untuk sektor energi dan gas alam.', pkg: 'Paket',
+    alts: { epc: 'Kapal crane memasang modul anjungan lepas pantai dengan pipa kuning di latar depan', om: 'Fasilitas pipa gas kuning dan tangki berlogo PGN Solution', 'supply-chain': 'Pipa baja diangkut forklift dan crane di pelabuhan', tuk: 'Peralatan pelatihan katup dan alat ukur tekanan di ruang praktik' } as Record<string, string>,
+  },
+  en: {
+    title: 'Business', heroLines: ['Work together,', 'believe, and', 'change the world'], heroAlt: 'Two PGN Solution technicians in helmets and red-and-blue uniforms in front of a gas pipeline installation at dusk',
+    detail: 'View Details', tukLead: 'Competency training and certification for people in the energy and natural gas sector.', pkg: 'Package',
+    alts: { epc: 'Crane vessel installing an offshore platform module with yellow pipes in the foreground', om: 'Yellow gas pipeline facility and a tank with the PGN Solution logo', 'supply-chain': 'Steel pipes moved by forklift and crane at a port', tuk: 'Valve training equipment and pressure gauges in a practice room' } as Record<string, string>,
+  },
+}[lang];
+
+const sub = [
+  { label: 'EPC', href: '#epc' },
+  { label: 'O & M', href: '#om' },
+  { label: 'Supply Chain', href: '#supply-chain' },
+  { label: 'TUK', href: '#tuk' },
+  { label: 'Service Packages', href: '#service-packages' },
+];
+import ServiceLine from '../../components/ServiceLine.astro';
+// video covers: the same photos as the homepage "Bisnis Kami" cards (public/media/bussines)
+const covers: Record<string, { src: string; alt: string }> = {
+  epc: { src: '/media/bussines/epc.jpg', alt: L.alts.epc },
+  om: { src: '/media/bussines/om.jpg', alt: L.alts.om },
+  'supply-chain': { src: '/media/bussines/supply-chain.jpg', alt: L.alts['supply-chain'] },
+  tuk: { src: '/media/bussines/tuk.jpg', alt: L.alts.tuk },
+};
+// chip display order per line (indexes into products) so the centred rows balance; see ServiceLine
+const chipOrders: Record<string, number[]> = {
+  epc: [2, 1, 3, 0, 4, 6, 5],
+  // the two short pipe products share a row; the two long ones get a row each
+  'supply-chain': [0, 1, 3, 2],
+};
+// O&M's eight scopes are full sentences: two equal columns, four rows
+const chipLayouts: Record<string, 'flow' | 'pairs'> = { om: 'pairs' };
+// TUK has its own detail page
+const ctas: Record<string, { label: string; href: string }> = { tuk: { label: L.detail, href: '/business/tuk' } };
+// shortened leads (two lines max; client request). The full text stays in the data and on the detail page.
+const leads: Record<string, string> = {
+  tuk: L.tukLead,
+};
+export const getStaticPaths = langPaths;
+---
+<Base title={L.title} description={businessHero.text} image="/media/hero/business.jpg">
+  <PageHero eyebrow={L.title} title={businessHero.title} text={businessHero.text} image="/media/hero/business.webp" imageSrcset="/media/hero/business.webp 1672w, /media/hero/business@2x.webp 3344w" imageAlt={L.heroAlt} crumbs={[{ label: L.title }]} lines={L.heroLines} />
+  <SubNav items={sub} />
+
+  {lines.map((l, idx) => (
+    <ServiceLine line={l} index={idx} cover={covers[l.id]?.src} coverAlt={covers[l.id]?.alt} chipOrder={chipOrders[l.id]} chipLayout={chipLayouts[l.id]} cta={ctas[l.id]} lead={leads[l.id]} />
+  ))}
+
+  <!-- SERVICE PACKAGES — an offer built on the lines above, so it gets its own layout: the homepage
+       "Bisnis Kami" card (media on top, tag, title, text), on white -->
+  <section id="service-packages" class="section pkg-sec" aria-labelledby="pkg-title">
+    <div class="wrap">
+      <div class="pkg-head">
+        <SectionHead eyebrow="Service Packages" title={packages.title} text={packages.text} id="pkg-title" maxw="20ch" />
+      </div>
+      <ol class="pkg" role="list">
+        {packages.items.map((p, i) => (
+          <li class="pkg__card" data-reveal="fade" style={`transition-delay:${i * 70}ms`}>
+            <div class="pkg__media">
+              <img src={p.icon} alt="" width="220" height="220" loading="lazy" decoding="async" />
+              <span class="pkg__tag">{L.pkg} {i + 1}</span>
+            </div>
+            <div class="pkg__body">
+              <h3 class="pkg__title">{p.name}</h3>
+              <p class="pkg__text">{p.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* SERVICE PACKAGES — the homepage "Bisnis Kami" card, on white like the lines above.
+     Top padding matches the gap between business lines (.svc + .svc); the bottom gives the
+     same breathing room before the footer. */
+  .pkg-sec { padding-top: clamp(32px, 4vw, 64px); padding-bottom: clamp(96px, 10vw, 150px); }
+  .pkg-head :global(.t-xl) { font-size: clamp(28px, 4.5vw, 70px); text-wrap: balance; }
+  .pkg { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .pkg__card {
+    position: relative; display: flex; flex-direction: column; padding: 8px; border-radius: 20px;
+    background: #fff; box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.05), 0 1px 2px rgba(var(--ink-rgb), 0.04);
+    transition: box-shadow 0.35s var(--ease), transform 0.35s var(--ease);
+  }
+  .pkg__card:hover { box-shadow: 0 0 0 1px rgba(var(--ink-rgb), 0.06), 0 18px 40px -18px rgba(var(--ink-rgb), 0.25); transform: translateY(-2px); }
+  /* the package's own illustration (animated GIF, white ground) centred in the media box */
+  .pkg__media { position: relative; display: grid; place-items: center; aspect-ratio: 7 / 5; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.06); }
+  .pkg__media img { width: 62%; height: auto; transition: transform 0.8s var(--ease); }
+  .pkg__card:hover .pkg__media img { transform: scale(1.05); }
+  .pkg__tag {
+    position: absolute; top: 12px; right: 12px; padding: 7px 12px; border-radius: 8px;
+    background: var(--blue); color: #fff; font-size: 13px; font-weight: 500; line-height: 1;
+  }
+  .pkg__body { display: grid; gap: 10px; padding: 20px 14px 18px; flex: 1; align-content: start; }
+  .pkg__title { margin: 0; font-family: var(--display); font-size: clamp(20px, 1.6vw, 26px); font-weight: 500; line-height: 1.2; color: var(--ink); }
+  .pkg__text { margin: 0; font-size: 15px; line-height: 1.5; color: var(--fg-muted); }
+  @media (max-width: 1000px) { .pkg { grid-template-columns: minmax(0, 1fr); max-width: 560px; margin-inline: auto; } }
+</style>

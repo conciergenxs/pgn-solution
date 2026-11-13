@@ -1,0 +1,36 @@
+---
+import Icon from './Icon.astro';
+import { formEndpoint } from '../data/site';
+interface Props { mailto: string; subject: string; id?: string }
+const { mailto, subject, id = 'contact-form' } = Astro.props;
+import { langOf } from '../i18n';
+const T = langOf(Astro.params) === 'en'
+  ? { name: 'Your Name', phone: 'Phone Number', email: 'Email', message: 'Your Message', required: '* Required', send: 'Send Message' }
+  : { name: 'Nama Anda', phone: 'No. Telepon', email: 'Email', message: 'Pesan Anda', required: '* Wajib diisi', send: 'Kirim Pesan' };
+---
+<form class="form" id={id} data-form="contact" data-endpoint={formEndpoint} data-mailto={mailto} data-subject={subject} novalidate={false}>
+  <input type="hidden" name="form" value={subject} />
+  <div class="form__row">
+    <div class="field">
+      <label for={`${id}-name`}>{T.name} <span class="req">*</span></label>
+      <input id={`${id}-name`} type="text" name="name" data-label={T.name} autocomplete="name" required />
+    </div>
+    <div class="field">
+      <label for={`${id}-phone`}>{T.phone} <span class="req">*</span></label>
+      <input id={`${id}-phone`} type="tel" name="phone" data-label={T.phone} autocomplete="tel" inputmode="tel" pattern="[0-9+()\-\s]{6,}" required />
+    </div>
+  </div>
+  <div class="field">
+    <label for={`${id}-email`}>{T.email} <span class="req">*</span></label>
+    <input id={`${id}-email`} type="email" name="email" data-label="Email" autocomplete="email" required />
+  </div>
+  <div class="field">
+    <label for={`${id}-message`}>{T.message} <span class="req">*</span></label>
+    <textarea id={`${id}-message`} name="message" data-label={T.message} rows="5" required></textarea>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between">
+    <span class="field__hint">{T.required}</span>
+    <button class="btn btn--primary btn--lg" type="submit">{T.send}</button>
+  </div>
+  <p class="form__status" role="status" aria-live="polite" data-form-status hidden></p>
+</form>

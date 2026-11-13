@@ -1,0 +1,145 @@
+---
+/**
+ * One-row client logo strip after terminal-industries.com's "Built by the Industry"
+ * grid: square cells, crosshair corners, grid lines that fade out on every side,
+ * and a cursor-following glow that lights the cell borders (PGN blue here).
+ * Chevrons page through all logos; cells swap in a left-to-right wave (JS:
+ * initLogoCarousel in src/scripts/app.ts). Without JS the first page shows.
+ *
+ * Docs mode (`docs` instead of `logos`, used for awards & certificates): each cell holds a document
+ * thumbnail that opens the lightbox, its title shows on hover, pages never wrap around, and
+ * [data-lc-filter] buttons in the same section narrow the set (`initialCat` = the one pressed on load).
+ * Docs mode shows 4 cells per page on desktop (2 on smaller screens) so the documents read larger.
+ */
+import Icon from './Icon.astro';
+type Doc = { src: string; caption: string; cat?: string };
+interface Props { logos?: string[]; docs?: Doc[]; label: string; group?: string; initialCat?: string }
+const { logos = [], docs, label, group = label, initialCat } = Astro.props;
+const items: Doc[] = docs ?? logos.map((src) => ({ src, caption: '' }));
+const isDocs = !!docs;
+const per = isDocs ? 4 : 5;
+const shown = initialCat ? items.filter((d) => d.cat === initialCat) : items;
+const first = shown.slice(0, per);
+const total = shown.length;
+const corners = (i: number, n: number) => (i === n - 1 ? ['tl', 'bl', 'tr', 'br'] : ['tl', 'bl']);
+import { langOf } from '../i18n';
+const lcT = langOf(Astro.params) === 'en' ? { prev: 'Show previous', next: 'Show next', zoom: 'enlarge' } : { prev: 'Tampilkan sebelumnya', next: 'Tampilkan berikutnya', zoom: 'perbesar' };
+---
+<div class:list={['lc', isDocs && 'lc--docs']} data-lc data-items={JSON.stringify(items)} data-mode={isDocs ? 'docs' : 'logos'} data-group={group} role="region" aria-roledescription="carousel" aria-label={label}>
+  <div class="lc__stage">
+    <button class="chev-btn chev-btn--prev lc__nav lc__nav--prev" type="button" data-lc-prev aria-label={lcT.prev}><Icon name="chev" /></button>
+    <ul class="lc__row" role="list" data-lc-row style={`--lc-n:${per}`}>
+      {first.map((it, i) => (
+        <li class="lc__cell">
+          {corners(i, first.length).map((c) => <span class={`lc__x lc__x--${c}`} aria-hidden="true"></span>)}
+          <span class="lc__fade lc__fade--top" aria-hidden="true"></span>
+          <span class="lc__fade lc__fade--bottom" aria-hidden="true"></span>
+          {i === 0 && <span class="lc__fade lc__fade--left" aria-hidden="true"></span>}
+          {i === first.length - 1 && <span class="lc__fade lc__fade--right" aria-hidden="true"></span>}
+          <div class="lc__clip">
+            <span class="lc__lines" aria-hidden="true"></span>
+            <span class="lc__glow" aria-hidden="true"></span>
+            <span class="lc__mask" aria-hidden="true"></span>
+            <span class="lc__fill" aria-hidden="true"></span>
+            {isDocs ? (
+              <a class="lc__logo" href={it.src} data-lc-open aria-label={`${it.caption}, ${lcT.zoom}`}><img src={it.src} alt="" decoding="async" /></a>
+              <span class="lc__cap" aria-hidden="true"><span>{it.caption}</span></span>
+            ) : (
+              <div class="lc__logo"><img src={it.src} alt="" decoding="async" /></div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+    <button class="chev-btn chev-btn--next lc__nav lc__nav--next" type="button" data-lc-next aria-label={lcT.next}><Icon name="chev" /></button>
+  </div>
+  <p class="lc__count" aria-hidden="true"><span data-lc-page>01</span> / <span data-lc-pages>{String(Math.ceil(total / per)).padStart(2, '0')}</span></p>
+  <p class="visually-hidden" aria-live="polite" data-lc-status>{langOf(Astro.params) === 'en' ? (isDocs ? `Showing documents 1–${first.length} of ${total}.` : `Showing logos 1–${first.length} of ${total} PT PGAS Solution clients and partners.`) : (isDocs ? `Menampilkan dokumen 1–${first.length} dari ${total}.` : `Menampilkan logo 1–${first.length} dari ${total} klien dan mitra PT PGAS Solution.`)}</p>
+</div>
+
+<style is:global>
+  .lc { --lc-line: #e5e5e5; --lc-bg: var(--white); --lc-glow: 26, 144, 202; position: relative; }
+  /* --lc-max lets the host section narrow the row (e.g. to clear side decorations) */
+  .lc__stage { position: relative; width: min(100%, var(--lc-max, 1110px)); margin-inline: auto; }
+  .lc__row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--lc-n, 5), minmax(0, 1fr)); }
+  .lc__cell { position: relative; aspect-ratio: 1 / 1; }
+
+  /* grid lines that fade out above, below and to the sides (bg gradient + 1px padding + white fill = 1px gradient edges) */
+  .lc__fade { position: absolute; padding: 1px; pointer-events: none; }
+  .lc__fade::after { content: ''; display: block; width: 100%; height: 100%; background: var(--lc-bg); }
+  .lc__fade--top, .lc__fade--bottom { left: 0; width: calc(100% + 1px); height: min(11.979vw, 200px); }
+  .lc__fade--top { bottom: 100%; margin-bottom: -1px; background: linear-gradient(to top, var(--lc-line), rgba(229, 229, 229, 0)); }
+  .lc__fade--bottom { top: 100%; background: linear-gradient(to bottom, var(--lc-line), rgba(229, 229, 229, 0)); }
+  .lc__fade--left, .lc__fade--right { top: 0; height: calc(100% + 1px); width: min(14.583vw, 373px); }
+  .lc__fade--left { right: 100%; background: linear-gradient(to left, var(--lc-line), rgba(229, 229, 229, 0)); }
+  .lc__fade--right { left: 100%; margin-left: 1px; background: linear-gradient(to right, var(--lc-line), rgba(229, 229, 229, 0)); }
+
+  /* crosshairs on the cell corners */
+  .lc__x { position: absolute; z-index: 3; width: 0; height: 0; pointer-events: none; }
+  .lc__x::before, .lc__x::after { content: ''; position: absolute; background: #979797; }
+  .lc__x::before { left: -5px; top: 0; width: 11px; height: 1px; }
+  .lc__x::after { left: 0; top: -5px; width: 1px; height: 11px; }
+  .lc__x--tl { left: 0; top: 0; } .lc__x--bl { left: 0; bottom: 0; } .lc__x--tr { right: -1px; top: 0; } .lc__x--br { right: -1px; bottom: 0; }
+  .lc__x.is-flicker::before, .lc__x.is-flicker::after { animation: lc-flicker 0.6s steps(1, end) both; animation-delay: inherit; }
+  @keyframes lc-flicker { 0% { opacity: 0; } 15% { opacity: 1; } 30% { opacity: 0.2; } 45% { opacity: 1; } 60% { opacity: 0.4; } 75%, 100% { opacity: 1; } }
+
+  /* cell: grey 1px lines; a cursor-following blue glow that only shows through a 2px ring */
+  .lc__clip { position: relative; width: calc(100% + 1px); height: calc(100% + 1px); overflow: clip; }
+  .lc__lines { position: absolute; inset: 0; box-shadow: inset 0 0 0 1px var(--lc-line); }
+  .lc__glow, .lc__fill {
+    position: absolute; left: 0; top: 0; width: 480px; height: 480px; pointer-events: none;
+    transform: translate3d(calc(-50% + var(--gx, -9999px)), calc(-50% + var(--gy, -9999px)), 0);
+  }
+  .lc__glow { opacity: 0; transition: opacity 0.4s; }
+  .lc__mask { position: absolute; left: 2px; top: 2px; width: calc(100% - 4px); height: calc(100% - 4px); background: var(--lc-bg); }
+  .lc__fill { z-index: 1; opacity: 0; transition: opacity 0.5s; }
+  .lc__logo { position: relative; z-index: 2; height: 100%; display: grid; place-items: center; padding: 0 11%; }
+  /* monochrome like the reference; full colour on hover */
+  .lc__logo img { grid-area: 1 / 1; width: 100%; height: 100%; max-height: 84px; object-fit: contain; filter: grayscale(1); opacity: 0.85; transition: filter 0.4s, opacity 0.4s; }
+  .lc__cell:hover .lc__logo img { filter: none; opacity: 1; }
+  @media (hover: hover) and (pointer: fine) {
+    .lc__glow { background: radial-gradient(circle at 50% 50%, rgb(var(--lc-glow)), rgba(var(--lc-glow), 0) 240px); }
+    .lc__fill { background: radial-gradient(circle, rgba(var(--lc-glow), 0.8), rgba(var(--lc-glow), 0) 240px) no-repeat; }
+    .lc__row.is-pointer .lc__glow { opacity: 1; }
+    .lc__cell:hover .lc__fill { opacity: 0.2; }
+  }
+
+  /* chevrons: either side of the row on desktop, under it on smaller screens */
+  /* look comes from the shared .chev-btn (global.css); only placement here */
+  .lc__nav { position: absolute; top: 50%; z-index: 4; margin-top: -24px; }
+  .lc__nav--prev { right: calc(100% + 40px); }
+  .lc__nav--next { left: calc(100% + 40px); }
+  .lc__count { position: relative; z-index: 5; white-space: nowrap; margin: 28px 0 0; text-align: center; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: var(--grey-1, #8a8a8a); }
+  /* not enough room beside the row below 1366px: chevrons + counter sit under it */
+  @media (max-width: 1365px) {
+    .lc__stage { padding-bottom: 76px; }
+    .lc__nav { top: auto; bottom: 0; margin-top: 0; }
+    .lc__nav--prev { right: auto; left: calc(50% - 104px); }
+    .lc__nav--next { left: calc(50% + 56px); }
+    .lc__count { position: absolute; left: 50%; bottom: 0; margin: 0; height: 48px; display: flex; align-items: center; white-space: nowrap; transform: translateX(-50%); }
+  }
+  @media (max-width: 640px) { .lc__logo { padding: 0 9%; } .lc__logo img { max-height: 56px; } }
+
+  /* docs mode: a document sheet per cell (monochrome until hovered, like the logos), title on hover.
+     The sheet is centred exactly in the cell (absolute + auto margins), whatever its proportions. */
+  .lc--docs .lc__logo { display: block; padding: 0; text-decoration: none; transition: transform 0.5s var(--ease); }
+  .lc--docs .lc__logo img {
+    position: absolute; inset: 0; margin: auto; width: auto; height: auto; max-width: 70%; max-height: 72%; object-fit: initial; border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(3, 34, 51, 0.12), 0 16px 30px -18px rgba(3, 34, 51, 0.5);
+  }
+  .lc--docs .lc__logo:focus-visible { outline: 2px solid var(--blue); outline-offset: -6px; }
+  .lc--docs .lc__cell.is-empty .lc__logo { pointer-events: none; }
+  .lc__cap { display: none; }
+  @media (hover: hover) and (pointer: fine) {
+    /* title on a blue fade so it never fights with the document behind it */
+    .lc__cap {
+      display: block; position: absolute; left: 1px; right: 1px; bottom: 1px; z-index: 3; padding: 56px 18px 18px; pointer-events: none;
+      background: linear-gradient(to top, rgba(26, 144, 202, 0.97) 0%, rgba(26, 144, 202, 0.88) 45%, rgba(26, 144, 202, 0) 100%);
+      color: #fff; opacity: 0; transform: translateY(10px); transition: opacity 0.35s, transform 0.45s var(--ease);
+    }
+    .lc__cap > span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; font-weight: 500; line-height: 1.35; }
+    .lc--docs .lc__cell:not(.is-empty):hover .lc__logo { transform: translateY(-9%) scale(0.9); }
+    .lc--docs .lc__cell:not(.is-empty):hover .lc__cap { opacity: 1; transform: none; }
+  }
+  @media (max-width: 640px) { .lc--docs .lc__logo img { max-width: 72%; max-height: 74%; } }
+</style>
