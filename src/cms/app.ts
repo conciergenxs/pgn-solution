@@ -434,6 +434,7 @@ function viewEdit(v: HTMLElement, kind: Kind, id?: string) {
         </div>
       </div>
       <aside class="ed__side">
+        <section class="card"><div class="card__head"><h2 class="card__title">Gambar sampul</h2></div><div class="card__body" data-cover></div></section>
         <section class="card"><div class="card__head"><h2 class="card__title">Publikasi</h2></div><div class="card__body">
           <dl class="meta-rows"><div><dt>Status</dt><dd>${isNew ? 'Belum disimpan' : d.status === 'published' ? 'Terbit' : 'Draf'}</dd></div>${isNew ? '' : `<div><dt>Terakhir disimpan</dt><dd>${ago(d.updatedAt)}</dd></div>`}</dl>
           <div class="field" style="margin-top:14px" data-f="date"><label class="label" for="f-date">Tanggal terbit</label><input class="input" type="date" id="f-date" value="${esc(d.date)}" data-date /><span class="hint hint--error" data-err="date" hidden>Tanggal wajib diisi.</span></div>
@@ -442,7 +443,6 @@ function viewEdit(v: HTMLElement, kind: Kind, id?: string) {
         <section class="card"><div class="card__head"><h2 class="card__title">Kategori</h2></div><div class="card__body">
           <div class="radio-row">${(['press-release', 'news'] as Kind[]).map((k) => `<label><input type="radio" name="kind" value="${k}"${k === kind ? ' checked' : ''} data-kind />${KIND_LABEL[k]}</label>`).join('')}</div>
         </div></section>
-        <section class="card"><div class="card__head"><h2 class="card__title">Gambar sampul</h2></div><div class="card__body" data-cover></div></section>
         <section class="card"><div class="card__head"><h2 class="card__title">Ringkasan</h2></div><div class="card__body">
           <div class="field"><label class="visually-hidden" for="f-ex">Ringkasan</label><textarea class="textarea" id="f-ex" maxlength="300" placeholder="Diisi otomatis dari paragraf pertama" data-excerpt>${esc(d.excerpt)}</textarea>
           <span class="hint" data-ex-n></span></div>
